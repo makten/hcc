@@ -56,13 +56,17 @@ function AddDeviceModal({
     onClose,
     onSave,
     roomName,
-    hassConnected
+    hassConnected,
+    hassUrl,
+    accessToken
 }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (device: DeviceFormData) => void;
     roomName: string;
     hassConnected: boolean;
+    hassUrl: string;
+    accessToken: string;
 }) {
     const [formData, setFormData] = useState<DeviceFormData>({
         name: '',
@@ -89,16 +93,22 @@ function AddDeviceModal({
 
     // Fetch available entities when modal opens and connected
     useEffect(() => {
-        if (isOpen && hassConnected) {
+        if (isOpen && hassConnected && hassUrl && accessToken) {
             setIsLoadingEntities(true);
+            // Configure the API before fetching
+            hassApi.configure({
+                url: hassUrl,
+                accessToken: accessToken,
+            });
             hassApi.getStates().then((states) => {
                 setAvailableEntities(states);
                 setIsLoadingEntities(false);
-            }).catch(() => {
+            }).catch((err) => {
+                console.error('Failed to fetch entities:', err);
                 setIsLoadingEntities(false);
             });
         }
-    }, [isOpen, hassConnected]);
+    }, [isOpen, hassConnected, hassUrl, accessToken]);
 
     // Filter suggestions based on input
     useEffect(() => {
@@ -307,8 +317,8 @@ function AddDeviceModal({
                                                             </p>
                                                         </div>
                                                         <span className={`text-xs px-2 py-0.5 rounded-md ${isOn ? 'bg-green-500/20 text-green-400' :
-                                                                isOff ? 'bg-red-500/20 text-red-400' :
-                                                                    'bg-cyan-500/20 text-cyan-400'
+                                                            isOff ? 'bg-red-500/20 text-red-400' :
+                                                                'bg-cyan-500/20 text-cyan-400'
                                                             }`}>
                                                             {entity.state}
                                                         </span>
@@ -1001,6 +1011,8 @@ export default function SettingsPage() {
                         onSave={(formData) => handleAddDevice(addDeviceModalRoom.id, formData)}
                         roomName={addDeviceModalRoom.name}
                         hassConnected={connected}
+                        hassUrl={hassUrl}
+                        accessToken={accessToken}
                     />
                 )}
                 {showAddRoomModal && (
