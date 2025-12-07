@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { hassApi } from '@/services';
 import {
     FiSettings,
     FiRefreshCw,
@@ -354,6 +355,8 @@ export default function SettingsPage() {
     const [accessToken, setAccessToken] = useState(config.homeAssistant?.accessToken || '');
     const [isConnecting, setIsConnecting] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [connectionError, setConnectionError] = useState<string | null>(null);
+    const [haVersion, setHaVersion] = useState<string | null>(null);
 
     const [addDeviceModalRoom, setAddDeviceModalRoom] = useState<RoomConfig | null>(null);
     const [showAddRoomModal, setShowAddRoomModal] = useState(false);
@@ -361,12 +364,19 @@ export default function SettingsPage() {
     const handleConnect = async () => {
         setIsConnecting(true);
         setConnectionStatus('idle');
+        setConnectionError(null);
+        setHaVersion(null);
 
-        // Simulate connection test (in real app, would call HA API)
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Configure the API with current settings
+        hassApi.configure({
+            url: hassUrl,
+            accessToken,
+        });
 
-        // For demo, always succeed if URL is provided
-        if (hassUrl) {
+        // Test the connection with the real API
+        const result = await hassApi.testConnection();
+
+        if (result.success) {
             updateHomeAssistant({
                 url: hassUrl,
                 accessToken,
@@ -374,8 +384,15 @@ export default function SettingsPage() {
                 lastConnected: new Date().toISOString(),
             });
             setConnectionStatus('success');
+            setHaVersion(result.version || null);
         } else {
+            updateHomeAssistant({
+                url: hassUrl,
+                accessToken,
+                connected: false,
+            });
             setConnectionStatus('error');
+            setConnectionError(result.error || 'Connection failed');
         }
 
         setIsConnecting(false);
@@ -518,13 +535,22 @@ export default function SettingsPage() {
                             </motion.button>
                         </div>
 
-                        <div className={`flex items-center gap-3 p-3 rounded-xl ${connected ? 'bg-green-500/10' : 'bg-white/5'}`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl ${connected ? 'bg-green-500/10' : connectionError ? 'bg-red-500/10' : 'bg-white/5'}`}>
                             <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'}`} />
-                            <span className="text-sm text-white/60">
-                                {connected
-                                    ? `Connected to Home Assistant (${config.homeAssistant?.lastConnected ? new Date(config.homeAssistant.lastConnected).toLocaleString() : 'just now'})`
-                                    : 'Not connected - using demo mode'}
-                            </span>
+                            <div className="flex-1">
+                                <span className="text-sm text-white/60">
+                                    {connected
+                                        ? `Connected to Home Assistant${haVersion ? ` v${haVersion}` : ''}`
+                                        : connectionError
+                                            ? connectionError
+                                            : 'Not connected - click "Test Connection" to connect'}
+                                </span>
+                                {connected && config.homeAssistant?.lastConnected && (
+                                    <span className="text-xs text-white/40 block mt-0.5">
+                                        Last connected: {new Date(config.homeAssistant.lastConnected).toLocaleString()}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </motion.section>
