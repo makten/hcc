@@ -91,20 +91,29 @@ function AddDeviceModal({
         error?: string;
     } | null>(null);
 
+    // Entity loading error state
+    const [entityLoadError, setEntityLoadError] = useState<string | null>(null);
+
     // Fetch available entities when modal opens and connected
     useEffect(() => {
         if (isOpen && hassConnected && hassUrl && accessToken) {
             setIsLoadingEntities(true);
+            setEntityLoadError(null);
             // Configure the API before fetching
             hassApi.configure({
                 url: hassUrl,
                 accessToken: accessToken,
             });
             hassApi.getStates().then((states) => {
+                console.log(`Fetched ${states.length} entities from Home Assistant`);
                 setAvailableEntities(states);
                 setIsLoadingEntities(false);
+                if (states.length === 0) {
+                    setEntityLoadError('No entities found. This may be a CORS issue - check browser console.');
+                }
             }).catch((err) => {
                 console.error('Failed to fetch entities:', err);
+                setEntityLoadError('Failed to load entities - CORS may be blocking the request. Add cors_allowed_origins to your HA config.');
                 setIsLoadingEntities(false);
             });
         }
@@ -271,7 +280,18 @@ function AddDeviceModal({
                                     {availableEntities.length} entities available
                                 </span>
                             )}
+                            {!isLoadingEntities && entityLoadError && (
+                                <span className="ml-2 text-red-400/80">⚠️ Error loading</span>
+                            )}
                         </label>
+
+                        {/* Entity Load Error Message */}
+                        {entityLoadError && (
+                            <div className="mb-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-300">
+                                {entityLoadError}
+                            </div>
+                        )}
+
                         <div className="flex gap-2">
                             <div className="flex-1 relative">
                                 <input
