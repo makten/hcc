@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { hassApi } from '@/services';
+import { hassApi, type HassState } from '@/services';
 import {
     FiSettings,
     FiRefreshCw,
@@ -70,6 +70,14 @@ function AddDeviceModal({
         type: 'light',
     });
 
+    // Entity suggestions state
+    const [availableEntities, setAvailableEntities] = useState<HassState[]>([]);
+    const [isLoadingEntities, setIsLoadingEntities] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [filteredSuggestions, setFilteredSuggestions] = useState<HassState[]>([]);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const suggestionsRef = useRef<HTMLDivElement>(null);
+
     // Entity test state
     const [isTesting, setIsTesting] = useState(false);
     const [testResult, setTestResult] = useState<{
@@ -79,6 +87,51 @@ function AddDeviceModal({
         error?: string;
     } | null>(null);
 
+    // Fetch available entities when modal opens and connected
+    useEffect(() => {
+        if (isOpen && hassConnected) {
+            setIsLoadingEntities(true);
+            hassApi.getStates().then((states) => {
+                setAvailableEntities(states);
+                setIsLoadingEntities(false);
+            }).catch(() => {
+                setIsLoadingEntities(false);
+            });
+        }
+    }, [isOpen, hassConnected]);
+
+    // Filter suggestions based on input
+    useEffect(() => {
+        if (formData.entityId.length > 0 && availableEntities.length > 0) {
+            const query = formData.entityId.toLowerCase();
+            const filtered = availableEntities
+                .filter(entity =>
+                    entity.entity_id.toLowerCase().includes(query) ||
+                    (entity.attributes.friendly_name as string || '').toLowerCase().includes(query)
+                )
+                .slice(0, 10); // Limit to 10 suggestions
+            setFilteredSuggestions(filtered);
+        } else {
+            setFilteredSuggestions([]);
+        }
+    }, [formData.entityId, availableEntities]);
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                suggestionsRef.current &&
+                !suggestionsRef.current.contains(event.target as Node) &&
+                inputRef.current &&
+                !inputRef.current.contains(event.target as Node)
+            ) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleSubmit = () => {
         if (formData.name && formData.entityId) {
             onSave(formData);
@@ -86,6 +139,32 @@ function AddDeviceModal({
             setTestResult(null);
             onClose();
         }
+    };
+
+    const handleSelectEntity = (entity: HassState) => {
+        const domain = entity.entity_id.split('.')[0];
+        const typeMap: Record<string, DeviceType> = {
+            light: 'light',
+            climate: 'climate',
+            fan: 'fan',
+            vacuum: 'vacuum',
+            media_player: 'media_player',
+            switch: 'switch',
+            sensor: 'sensor',
+            camera: 'camera',
+        };
+
+        setFormData({
+            entityId: entity.entity_id,
+            name: (entity.attributes.friendly_name as string) || entity.entity_id,
+            type: typeMap[domain] || 'switch',
+        });
+        setTestResult({
+            success: true,
+            state: entity.state,
+            friendlyName: (entity.attributes.friendly_name as string) || entity.entity_id,
+        });
+        setShowSuggestions(false);
     };
 
     const handleTestEntity = async () => {
@@ -142,6 +221,7 @@ function AddDeviceModal({
     const handleEntityIdChange = (value: string) => {
         setFormData({ ...formData, entityId: value });
         setTestResult(null);
+        setShowSuggestions(true);
     };
 
     if (!isOpen) return null;
@@ -158,7 +238,7 @@ function AddDeviceModal({
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-md rounded-2xl bg-[#131720] border border-white/10 p-6"
+                className="w-full max-w-md rounded-2xl bg-[#131720] border border-white/10 p-6 max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-6">
@@ -169,16 +249,77 @@ function AddDeviceModal({
                 </div>
 
                 <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm text-white/50 mb-2">Entity ID (from Home Assistant)</label>
+                    {/* Entity ID with Autocomplete */}
+                    <div className="relative">
+                        <label className="block text-sm text-white/50 mb-2">
+                            Entity ID (from Home Assistant)
+                            {isLoadingEntities && (
+                                <span className="ml-2 text-cyan-400/60">Loading entities...</span>
+                            )}
+                            {!isLoadingEntities && availableEntities.length > 0 && (
+                                <span className="ml-2 text-cyan-400/60">
+                                    {availableEntities.length} entities available
+                                </span>
+                            )}
+                        </label>
                         <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={formData.entityId}
-                                onChange={(e) => handleEntityIdChange(e.target.value)}
-                                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none font-mono text-sm"
-                                placeholder="e.g., light.living_room_main"
-                            />
+                            <div className="flex-1 relative">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={formData.entityId}
+                                    onChange={(e) => handleEntityIdChange(e.target.value)}
+                                    onFocus={() => setShowSuggestions(true)}
+                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none font-mono text-sm"
+                                    placeholder="Start typing to search entities..."
+                                    autoComplete="off"
+                                />
+
+                                {/* Suggestions Dropdown */}
+                                <AnimatePresence>
+                                    {showSuggestions && filteredSuggestions.length > 0 && (
+                                        <motion.div
+                                            ref={suggestionsRef}
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="absolute z-50 left-0 right-0 mt-1 rounded-xl bg-[#1a1f2e] border border-white/10 shadow-2xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar"
+                                        >
+                                            {filteredSuggestions.map((entity) => {
+                                                const domain = entity.entity_id.split('.')[0];
+                                                const icon = DEVICE_TYPES.find(t => t.value === domain)?.icon || '📱';
+                                                const isOn = entity.state === 'on';
+                                                const isOff = entity.state === 'off';
+
+                                                return (
+                                                    <button
+                                                        key={entity.entity_id}
+                                                        onClick={() => handleSelectEntity(entity)}
+                                                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-b-0"
+                                                    >
+                                                        <span className="text-lg">{icon}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-white truncate">
+                                                                {(entity.attributes.friendly_name as string) || entity.entity_id}
+                                                            </p>
+                                                            <p className="text-xs text-white/40 font-mono truncate">
+                                                                {entity.entity_id}
+                                                            </p>
+                                                        </div>
+                                                        <span className={`text-xs px-2 py-0.5 rounded-md ${isOn ? 'bg-green-500/20 text-green-400' :
+                                                                isOff ? 'bg-red-500/20 text-red-400' :
+                                                                    'bg-cyan-500/20 text-cyan-400'
+                                                            }`}>
+                                                            {entity.state}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
                             <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
@@ -242,7 +383,7 @@ function AddDeviceModal({
 
                         {!hassConnected && (
                             <p className="text-xs text-amber-400/80 mt-2">
-                                ⚠️ Connect to Home Assistant first to test entities
+                                ⚠️ Connect to Home Assistant first to browse entities
                             </p>
                         )}
                     </div>
