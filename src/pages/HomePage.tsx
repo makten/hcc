@@ -10,7 +10,7 @@ import {
     FiBattery,
     FiCpu
 } from 'react-icons/fi';
-import { InteractiveFloorplan } from '@/components/floorplan';
+import { FloorPlanMap } from '@/components/floorplan';
 
 // Weather mock data
 const WEATHER = {
@@ -173,7 +173,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0d1117]/50 to-[#0d1117] pointer-events-none" />
 
                 <div className="w-full max-w-5xl p-8 scale-90 md:scale-100 xl:scale-110 transition-transform duration-500">
-                    <InteractiveFloorplan />
+                    <FloorPlanMap />
                 </div>
 
                 {/* Absolute overlay indicators if needed */}

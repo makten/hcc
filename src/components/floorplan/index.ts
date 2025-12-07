@@ -1,1 +1,1 @@
-export { default as InteractiveFloorplan } from './InteractiveFloorplan';
+export * from './FloorPlanMap';

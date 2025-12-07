@@ -126,7 +126,8 @@ function AddDeviceModal({
                 }
             }).catch((err) => {
                 console.error('Failed to fetch entities:', err);
-                setEntityLoadError('Failed to load entities - CORS may be blocking the request. Add cors_allowed_origins to your HA config.');
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                setEntityLoadError(`Failed to load entities: ${errorMessage}. Check CORS settings in Home Assistant.`);
                 setIsLoadingEntities(false);
             });
         }
@@ -725,9 +726,16 @@ function RoomSection({ room, onAddDevice, onRemoveDevice, onRemoveRoom, onEditRo
 
     return (
         <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
-            <button
+            <div
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors cursor-pointer select-none"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        setIsExpanded(!isExpanded);
+                    }
+                }}
             >
                 <div className="flex items-center gap-3">
                     <div
@@ -754,7 +762,7 @@ function RoomSection({ room, onAddDevice, onRemoveDevice, onRemoveRoom, onEditRo
                     </button>
                     {isExpanded ? <FiChevronDown className="text-white/40" /> : <FiChevronRight className="text-white/40" />}
                 </div>
-            </button>
+            </div>
 
             <AnimatePresence>
                 {isExpanded && (
