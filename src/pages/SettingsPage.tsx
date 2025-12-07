@@ -11,7 +11,6 @@ import {
     FiTrash2,
     FiCheck,
     FiPlus,
-    FiEdit2,
     FiX,
     FiHome,
     FiCpu,
@@ -131,8 +130,8 @@ function AddDeviceModal({
                                     key={type.value}
                                     onClick={() => setFormData({ ...formData, type: type.value })}
                                     className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${formData.type === type.value
-                                            ? 'bg-cyan-500/20 border border-cyan-500/50'
-                                            : 'bg-white/5 border border-white/10 hover:border-white/20'
+                                        ? 'bg-cyan-500/20 border border-cyan-500/50'
+                                        : 'bg-white/5 border border-white/10 hover:border-white/20'
                                         }`}
                                 >
                                     <span className="text-lg">{type.icon}</span>
@@ -231,8 +230,8 @@ function AddRoomModal({
                                     key={color}
                                     onClick={() => setFormData({ ...formData, color })}
                                     className={`w-10 h-10 rounded-xl transition-all ${formData.color === color
-                                            ? 'ring-2 ring-white ring-offset-2 ring-offset-[#131720]'
-                                            : ''
+                                        ? 'ring-2 ring-white ring-offset-2 ring-offset-[#131720]'
+                                        : ''
                                         }`}
                                     style={{ backgroundColor: color }}
                                 />
@@ -495,10 +494,10 @@ export default function SettingsPage() {
                                 onClick={handleConnect}
                                 disabled={isConnecting}
                                 className={`flex-1 px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${connectionStatus === 'success'
-                                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                        : connectionStatus === 'error'
-                                            ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                                            : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30'
+                                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                    : connectionStatus === 'error'
+                                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                                        : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30'
                                     }`}
                             >
                                 {isConnecting ? (
