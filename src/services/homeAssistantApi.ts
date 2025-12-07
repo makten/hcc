@@ -1,11 +1,17 @@
 /**
  * Home Assistant API Service
  * Provides methods to interact with the Home Assistant REST API
+ * 
+ * Note: Due to CORS restrictions in browsers, direct calls to Home Assistant
+ * from a different origin may be blocked. This service provides options for:
+ * 1. Using a proxy (configured in nginx for production)
+ * 2. Direct calls (when Home Assistant is configured to allow CORS)
  */
 
 export interface HassApiConfig {
     url: string;
     accessToken: string;
+    useProxy?: boolean; // If true, use local proxy to avoid CORS
 }
 
 export interface HassState {
@@ -30,6 +36,7 @@ export interface HassServiceResponse {
 class HomeAssistantApi {
     private baseUrl: string = '';
     private accessToken: string = '';
+    private useProxy: boolean = false;
 
     /**
      * Configure the API with Home Assistant URL and access token
@@ -38,6 +45,18 @@ class HomeAssistantApi {
         // Remove trailing slash if present
         this.baseUrl = config.url.replace(/\/$/, '');
         this.accessToken = config.accessToken;
+        this.useProxy = config.useProxy ?? false;
+    }
+
+    /**
+     * Get the effective URL (proxied or direct)
+     */
+    private getEffectiveUrl(endpoint: string): string {
+        if (this.useProxy) {
+            // Use local proxy endpoint
+            return `/api/hass${endpoint}`;
+        }
+        return `${this.baseUrl}${endpoint}`;
     }
 
     /**
@@ -67,10 +86,12 @@ class HomeAssistantApi {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
+            // Try direct connection first
             const response = await fetch(`${this.baseUrl}/api/`, {
                 method: 'GET',
                 headers: this.getHeaders(),
                 signal: controller.signal,
+                mode: 'cors', // Explicitly request CORS
             });
 
             clearTimeout(timeoutId);
@@ -89,13 +110,21 @@ class HomeAssistantApi {
             return { success: true, version: data.version };
 
         } catch (error) {
+            console.error('Home Assistant connection error:', error);
+
             if (error instanceof Error) {
                 if (error.name === 'AbortError') {
                     return { success: false, error: 'Connection timeout - check URL and network' };
                 }
-                if (error.message.includes('fetch') || error.message.includes('network')) {
-                    return { success: false, error: 'Cannot reach Home Assistant - check URL' };
+
+                // CORS errors and network errors both throw TypeError in fetch
+                if (error.name === 'TypeError') {
+                    return {
+                        success: false,
+                        error: 'Cannot connect - CORS blocked or network error. Try adding this to your Home Assistant configuration.yaml:\n\nhttp:\n  cors_allowed_origins:\n    - "*"'
+                    };
                 }
+
                 return { success: false, error: error.message };
             }
             return { success: false, error: 'Unknown error occurred' };
@@ -107,7 +136,7 @@ class HomeAssistantApi {
      */
     async getStates(): Promise<HassState[]> {
         try {
-            const response = await fetch(`${this.baseUrl}/api/states`, {
+            const response = await fetch(this.getEffectiveUrl('/states'), {
                 method: 'GET',
                 headers: this.getHeaders(),
             });
@@ -128,7 +157,7 @@ class HomeAssistantApi {
      */
     async getState(entityId: string): Promise<HassState | null> {
         try {
-            const response = await fetch(`${this.baseUrl}/api/states/${entityId}`, {
+            const response = await fetch(this.getEffectiveUrl(`/states/${entityId}`), {
                 method: 'GET',
                 headers: this.getHeaders(),
             });
@@ -159,7 +188,7 @@ class HomeAssistantApi {
                 data.entity_id = entityId;
             }
 
-            const response = await fetch(`${this.baseUrl}/api/services/${domain}/${service}`, {
+            const response = await fetch(this.getEffectiveUrl(`/services/${domain}/${service}`), {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(data),
@@ -221,7 +250,7 @@ class HomeAssistantApi {
      */
     async getConfig(): Promise<HassConfig | null> {
         try {
-            const response = await fetch(`${this.baseUrl}/api/config`, {
+            const response = await fetch(this.getEffectiveUrl('/config'), {
                 method: 'GET',
                 headers: this.getHeaders(),
             });

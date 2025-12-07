@@ -535,19 +535,25 @@ export default function SettingsPage() {
                             </motion.button>
                         </div>
 
-                        <div className={`flex items-center gap-3 p-3 rounded-xl ${connected ? 'bg-green-500/10' : connectionError ? 'bg-red-500/10' : 'bg-white/5'}`}>
-                            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'}`} />
-                            <div className="flex-1">
-                                <span className="text-sm text-white/60">
-                                    {connected
-                                        ? `Connected to Home Assistant${haVersion ? ` v${haVersion}` : ''}`
-                                        : connectionError
-                                            ? connectionError
-                                            : 'Not connected - click "Test Connection" to connect'}
-                                </span>
-                                {connected && config.homeAssistant?.lastConnected && (
-                                    <span className="text-xs text-white/40 block mt-0.5">
-                                        Last connected: {new Date(config.homeAssistant.lastConnected).toLocaleString()}
+                        <div className={`flex items-start gap-3 p-3 rounded-xl ${connected ? 'bg-green-500/10' : connectionError ? 'bg-red-500/10' : 'bg-white/5'}`}>
+                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${connected ? 'bg-green-400' : connectionError ? 'bg-red-400' : 'bg-gray-400'}`} />
+                            <div className="flex-1 min-w-0">
+                                {connected ? (
+                                    <>
+                                        <span className="text-sm text-green-400">
+                                            Connected to Home Assistant{haVersion ? ` v${haVersion}` : ''}
+                                        </span>
+                                        {config.homeAssistant?.lastConnected && (
+                                            <span className="text-xs text-white/40 block mt-0.5">
+                                                Last connected: {new Date(config.homeAssistant.lastConnected).toLocaleString()}
+                                            </span>
+                                        )}
+                                    </>
+                                ) : connectionError ? (
+                                    <pre className="text-sm text-red-300 whitespace-pre-wrap font-sans">{connectionError}</pre>
+                                ) : (
+                                    <span className="text-sm text-white/60">
+                                        Not connected - click "Test Connection" to connect
                                     </span>
                                 )}
                             </div>
