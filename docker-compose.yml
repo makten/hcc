@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  home-control-center:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: home-control-center
+    restart: unless-stopped
+    ports:
+      # Expose on all network interfaces (0.0.0.0) so it's accessible
+      # from any device on the local network
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    # Health check to ensure the app is running
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Resource limits (optional, adjust as needed)
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
