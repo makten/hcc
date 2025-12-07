@@ -55,12 +55,14 @@ function AddDeviceModal({
     isOpen,
     onClose,
     onSave,
-    roomName
+    roomName,
+    hassConnected
 }: {
     isOpen: boolean;
     onClose: () => void;
     onSave: (device: DeviceFormData) => void;
     roomName: string;
+    hassConnected: boolean;
 }) {
     const [formData, setFormData] = useState<DeviceFormData>({
         name: '',
@@ -68,12 +70,78 @@ function AddDeviceModal({
         type: 'light',
     });
 
+    // Entity test state
+    const [isTesting, setIsTesting] = useState(false);
+    const [testResult, setTestResult] = useState<{
+        success: boolean;
+        state?: string;
+        friendlyName?: string;
+        error?: string;
+    } | null>(null);
+
     const handleSubmit = () => {
         if (formData.name && formData.entityId) {
             onSave(formData);
             setFormData({ name: '', entityId: '', type: 'light' });
+            setTestResult(null);
             onClose();
         }
+    };
+
+    const handleTestEntity = async () => {
+        if (!formData.entityId) return;
+
+        setIsTesting(true);
+        setTestResult(null);
+
+        try {
+            const state = await hassApi.getState(formData.entityId);
+
+            if (state) {
+                setTestResult({
+                    success: true,
+                    state: state.state,
+                    friendlyName: state.attributes.friendly_name as string || formData.entityId,
+                });
+                // Auto-fill name if empty
+                if (!formData.name && state.attributes.friendly_name) {
+                    setFormData(prev => ({ ...prev, name: state.attributes.friendly_name as string }));
+                }
+                // Auto-detect type from entity_id prefix
+                const domain = formData.entityId.split('.')[0];
+                const typeMap: Record<string, DeviceType> = {
+                    light: 'light',
+                    climate: 'climate',
+                    fan: 'fan',
+                    vacuum: 'vacuum',
+                    media_player: 'media_player',
+                    switch: 'switch',
+                    sensor: 'sensor',
+                    camera: 'camera',
+                };
+                if (typeMap[domain]) {
+                    setFormData(prev => ({ ...prev, type: typeMap[domain] }));
+                }
+            } else {
+                setTestResult({
+                    success: false,
+                    error: `Entity "${formData.entityId}" not found in Home Assistant`,
+                });
+            }
+        } catch (error) {
+            setTestResult({
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to test entity',
+            });
+        }
+
+        setIsTesting(false);
+    };
+
+    // Reset test result when entity ID changes
+    const handleEntityIdChange = (value: string) => {
+        setFormData({ ...formData, entityId: value });
+        setTestResult(null);
     };
 
     if (!isOpen) return null;
@@ -102,6 +170,84 @@ function AddDeviceModal({
 
                 <div className="space-y-4">
                     <div>
+                        <label className="block text-sm text-white/50 mb-2">Entity ID (from Home Assistant)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={formData.entityId}
+                                onChange={(e) => handleEntityIdChange(e.target.value)}
+                                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none font-mono text-sm"
+                                placeholder="e.g., light.living_room_main"
+                            />
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={handleTestEntity}
+                                disabled={!formData.entityId || !hassConnected || isTesting}
+                                className={`px-4 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${testResult?.success
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                    : testResult?.error
+                                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                        : 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30'
+                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                {isTesting ? (
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                    >
+                                        <FiRefreshCw size={16} />
+                                    </motion.div>
+                                ) : testResult?.success ? (
+                                    <FiCheck size={16} />
+                                ) : (
+                                    <FiWifi size={16} />
+                                )}
+                                {isTesting ? 'Testing...' : 'Test'}
+                            </motion.button>
+                        </div>
+
+                        {/* Test Result Display */}
+                        {testResult && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`mt-3 p-3 rounded-xl ${testResult.success ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'
+                                    }`}
+                            >
+                                {testResult.success ? (
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                                            <FiCheck size={14} />
+                                            Entity found!
+                                        </div>
+                                        <div className="text-xs text-white/60">
+                                            <span className="text-white/40">Name:</span> {testResult.friendlyName}
+                                        </div>
+                                        <div className="text-xs text-white/60">
+                                            <span className="text-white/40">State:</span>{' '}
+                                            <span className={testResult.state === 'on' ? 'text-green-400' : testResult.state === 'off' ? 'text-red-400' : 'text-cyan-400'}>
+                                                {testResult.state}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-2 text-red-400 text-sm">
+                                        <FiX size={14} className="mt-0.5 flex-shrink-0" />
+                                        <span>{testResult.error}</span>
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+
+                        {!hassConnected && (
+                            <p className="text-xs text-amber-400/80 mt-2">
+                                ⚠️ Connect to Home Assistant first to test entities
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
                         <label className="block text-sm text-white/50 mb-2">Device Name</label>
                         <input
                             type="text"
@@ -110,17 +256,11 @@ function AddDeviceModal({
                             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none"
                             placeholder="e.g., Ceiling Light"
                         />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm text-white/50 mb-2">Entity ID (from Home Assistant)</label>
-                        <input
-                            type="text"
-                            value={formData.entityId}
-                            onChange={(e) => setFormData({ ...formData, entityId: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none font-mono text-sm"
-                            placeholder="e.g., light.living_room_main"
-                        />
+                        {testResult?.success && !formData.name && (
+                            <p className="text-xs text-cyan-400/60 mt-1">
+                                💡 Tip: Test the entity to auto-fill the name
+                            </p>
+                        )}
                     </div>
 
                     <div>
@@ -163,6 +303,7 @@ function AddDeviceModal({
         </motion.div>
     );
 }
+
 
 function AddRoomModal({
     isOpen,
@@ -718,6 +859,7 @@ export default function SettingsPage() {
                         onClose={() => setAddDeviceModalRoom(null)}
                         onSave={(formData) => handleAddDevice(addDeviceModalRoom.id, formData)}
                         roomName={addDeviceModalRoom.name}
+                        hassConnected={connected}
                     />
                 )}
                 {showAddRoomModal && (
