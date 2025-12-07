@@ -9,7 +9,7 @@ export interface RoomConfig {
 }
 
 // Device types supported
-export type DeviceType = 'light' | 'climate' | 'fan' | 'vacuum' | 'media_player' | 'switch' | 'sensor';
+export type DeviceType = 'light' | 'climate' | 'fan' | 'vacuum' | 'media_player' | 'switch' | 'sensor' | 'camera';
 
 export interface DeviceConfig {
     id: string;
@@ -36,6 +36,14 @@ export interface AudioZone {
     icon?: string;
 }
 
+// Home Assistant connection configuration
+export interface HomeAssistantConfig {
+    url: string;
+    accessToken: string;
+    connected: boolean;
+    lastConnected?: string;
+}
+
 // Dashboard configuration (persisted to localStorage)
 export interface DashboardConfig {
     rooms: RoomConfig[];
@@ -43,6 +51,7 @@ export interface DashboardConfig {
     audioZones: AudioZone[];
     theme: 'dark' | 'light';
     gridLayout: 'compact' | 'comfortable';
+    homeAssistant: HomeAssistantConfig;
 }
 
 // Entity state from Home Assistant

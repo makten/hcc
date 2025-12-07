@@ -10,6 +10,7 @@ import {
     FiVideo,
     FiMusic,
     FiGrid,
+    FiSettings,
 } from 'react-icons/fi';
 import { AudioMatrix } from '@/features/audio-matrix';
 import { RussoundPlayerModal } from '@/features/russound-player';
@@ -26,6 +27,7 @@ const ROOM_NAV_ITEMS = [
     { id: 'garage', path: '/room/garage', icon: FiTool, label: 'Garage' },
     { id: 'cameras', path: '/cameras', icon: FiVideo, label: 'Cameras' },
     { id: 'music', path: '#', icon: FiMusic, label: 'Music', isMusic: true },
+    { id: 'settings', path: '/settings', icon: FiSettings, label: 'Settings' },
 ];
 
 export default function MainLayout() {

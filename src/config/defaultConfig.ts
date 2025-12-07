@@ -193,13 +193,16 @@ export const defaultConfig: DashboardConfig = {
     ],
     theme: 'dark',
     gridLayout: 'comfortable',
+    homeAssistant: {
+        url: 'http://homeassistant.local:8123',
+        accessToken: '',
+        connected: false,
+    },
 };
 
-// Home Assistant connection config
+// Home Assistant connection config (legacy, now stored in DashboardConfig)
 export const haConfig = {
-    // These can be overridden via environment variables
     hassUrl: import.meta.env.VITE_HASS_URL || 'http://homeassistant.local:8123',
-    // For development, we'll use a mock mode
     mockMode: import.meta.env.VITE_MOCK_MODE === 'true' || true,
 };
 
