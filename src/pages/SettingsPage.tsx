@@ -18,7 +18,8 @@ import {
     FiKey,
     FiChevronRight,
     FiChevronDown,
-    FiSave
+    FiSave,
+    FiEdit2
 } from 'react-icons/fi';
 import { useApp } from '@/context';
 import { DeviceConfig, RoomConfig, DeviceType } from '@/types';
@@ -37,6 +38,18 @@ const DEVICE_TYPES: { value: DeviceType; label: string; icon: string }[] = [
 const ROOM_COLORS = [
     '#00d4ff', '#a855f7', '#00ff88', '#ff6b35', '#fbbf24',
     '#f472b6', '#06b6d4', '#6b7280', '#ef4444', '#10b981',
+];
+
+const ROOM_ICONS = [
+    { id: 'FiHome', label: 'Home', icon: '🏠' },
+    { id: 'FiMonitor', label: 'Living Room', icon: '📺' },
+    { id: 'FiMoon', label: 'Bedroom', icon: '🌙' },
+    { id: 'FiCoffee', label: 'Kitchen', icon: '☕' },
+    { id: 'FiGrid', label: 'Office', icon: '💼' },
+    { id: 'FiSun', label: 'Outdoor', icon: '☀️' },
+    { id: 'FiTool', label: 'Garage', icon: '🔧' },
+    { id: 'FiMusic', label: 'Music Room', icon: '🎵' },
+    { id: 'FiSquare', label: 'Other', icon: '◼️' },
 ];
 
 interface DeviceFormData {
@@ -574,11 +587,139 @@ function AddRoomModal({
     );
 }
 
-function RoomSection({ room, onAddDevice, onRemoveDevice, onRemoveRoom }: {
+function EditRoomModal({
+    isOpen,
+    onClose,
+    onSave,
+    room
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (updates: Partial<RoomFormData>) => void;
+    room: RoomConfig;
+}) {
+    const [formData, setFormData] = useState<RoomFormData>({
+        name: room.name,
+        icon: room.icon,
+        color: room.color,
+    });
+
+    // Update form when room changes
+    useEffect(() => {
+        setFormData({
+            name: room.name,
+            icon: room.icon,
+            color: room.color,
+        });
+    }, [room]);
+
+    const handleSubmit = () => {
+        if (formData.name) {
+            onSave(formData);
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="w-full max-w-md rounded-2xl bg-[#131720] border border-white/10 p-6"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-white">Edit Room</h3>
+                    <button onClick={onClose} className="text-white/40 hover:text-white">
+                        <FiX size={20} />
+                    </button>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm text-white/50 mb-2">Room Name</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none"
+                            placeholder="e.g., Master Bedroom"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-white/50 mb-2">Room Icon</label>
+                        <div className="grid grid-cols-5 gap-2">
+                            {ROOM_ICONS.map((iconOption) => (
+                                <button
+                                    key={iconOption.id}
+                                    onClick={() => setFormData({ ...formData, icon: iconOption.id })}
+                                    className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${formData.icon === iconOption.id
+                                        ? 'bg-cyan-500/20 border border-cyan-500/50'
+                                        : 'bg-white/5 border border-white/10 hover:border-white/20'
+                                        }`}
+                                    title={iconOption.label}
+                                >
+                                    <span className="text-xl">{iconOption.icon}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-white/50 mb-2">Room Color</label>
+                        <div className="flex gap-2 flex-wrap">
+                            {ROOM_COLORS.map((color) => (
+                                <button
+                                    key={color}
+                                    onClick={() => setFormData({ ...formData, color })}
+                                    className={`w-10 h-10 rounded-xl transition-all ${formData.color === color
+                                        ? 'ring-2 ring-white ring-offset-2 ring-offset-[#131720]'
+                                        : ''
+                                        }`}
+                                    style={{ backgroundColor: color }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!formData.name}
+                        className="flex-1 py-3 rounded-xl bg-cyan-500 text-white font-medium hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        <FiSave size={18} />
+                        Save Changes
+                    </button>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
+function RoomSection({ room, onAddDevice, onRemoveDevice, onRemoveRoom, onEditRoom }: {
     room: RoomConfig;
     onAddDevice: () => void;
     onRemoveDevice: (deviceId: string) => void;
     onRemoveRoom: () => void;
+    onEditRoom: () => void;
 }) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -601,6 +742,16 @@ function RoomSection({ room, onAddDevice, onRemoveDevice, onRemoveRoom }: {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEditRoom();
+                        }}
+                        className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                        title="Edit Room"
+                    >
+                        <FiEdit2 size={16} />
+                    </button>
                     {isExpanded ? <FiChevronDown className="text-white/40" /> : <FiChevronRight className="text-white/40" />}
                 </div>
             </button>
@@ -661,7 +812,7 @@ function RoomSection({ room, onAddDevice, onRemoveDevice, onRemoveRoom }: {
 }
 
 export default function SettingsPage() {
-    const { config, resetConfig, updateHomeAssistant, addRoom, removeRoom, addDeviceToRoom, removeDeviceFromRoom } = useApp();
+    const { config, resetConfig, updateHomeAssistant, addRoom, updateRoom, removeRoom, addDeviceToRoom, removeDeviceFromRoom } = useApp();
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [hassUrl, setHassUrl] = useState(config.homeAssistant?.url || 'http://homeassistant.local:8123');
     const [accessToken, setAccessToken] = useState(config.homeAssistant?.accessToken || '');
@@ -671,6 +822,7 @@ export default function SettingsPage() {
     const [haVersion, setHaVersion] = useState<string | null>(null);
 
     const [addDeviceModalRoom, setAddDeviceModalRoom] = useState<RoomConfig | null>(null);
+    const [editRoomModalRoom, setEditRoomModalRoom] = useState<RoomConfig | null>(null);
     const [showAddRoomModal, setShowAddRoomModal] = useState(false);
 
     const handleConnect = async () => {
@@ -735,6 +887,11 @@ export default function SettingsPage() {
             devices: [],
         };
         addRoom(newRoom);
+    };
+
+    const handleUpdateRoom = (roomId: string, updates: Partial<RoomFormData>) => {
+        updateRoom(roomId, updates);
+        setEditRoomModalRoom(null);
     };
 
     const handleAddDevice = (roomId: string, formData: DeviceFormData) => {
@@ -902,6 +1059,7 @@ export default function SettingsPage() {
                                 onAddDevice={() => setAddDeviceModalRoom(room)}
                                 onRemoveDevice={(deviceId) => removeDeviceFromRoom(room.id, deviceId)}
                                 onRemoveRoom={() => removeRoom(room.id)}
+                                onEditRoom={() => setEditRoomModalRoom(room)}
                             />
                         ))}
                     </div>
@@ -1033,6 +1191,14 @@ export default function SettingsPage() {
                         hassConnected={connected}
                         hassUrl={hassUrl}
                         accessToken={accessToken}
+                    />
+                )}
+                {editRoomModalRoom && (
+                    <EditRoomModal
+                        isOpen={!!editRoomModalRoom}
+                        onClose={() => setEditRoomModalRoom(null)}
+                        onSave={(updates) => handleUpdateRoom(editRoomModalRoom.id, updates)}
+                        room={editRoomModalRoom}
                     />
                 )}
                 {showAddRoomModal && (

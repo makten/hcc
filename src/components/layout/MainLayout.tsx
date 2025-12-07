@@ -11,28 +11,54 @@ import {
     FiMusic,
     FiGrid,
     FiSettings,
+    FiSquare,
 } from 'react-icons/fi';
 import { AudioMatrix } from '@/features/audio-matrix';
 import { RussoundPlayerModal } from '@/features/russound-player';
 import { useApp } from '@/context';
+import { IconType } from 'react-icons';
 
-// Room icons for the sidebar
-const ROOM_NAV_ITEMS = [
+// Icon mapping for dynamic room icons
+const ICON_MAP: Record<string, IconType> = {
+    FiHome,
+    FiMonitor,
+    FiCoffee,
+    FiSun,
+    FiMoon,
+    FiTool,
+    FiVideo,
+    FiMusic,
+    FiGrid,
+    FiSettings,
+    FiSquare,
+};
+
+// Fixed navigation items (always present)
+const FIXED_NAV_ITEMS = [
     { id: 'home', path: '/', icon: FiHome, label: 'Home' },
-    { id: 'living-room', path: '/room/living-room', icon: FiMonitor, label: 'Living Room' },
-    { id: 'bedroom-1', path: '/room/bedroom-1', icon: FiMoon, label: 'Bedroom' },
-    { id: 'kitchen', path: '/room/kitchen', icon: FiCoffee, label: 'Kitchen' },
-    { id: 'office', path: '/room/office', icon: FiGrid, label: 'Office' },
-    { id: 'veranda', path: '/room/veranda', icon: FiSun, label: 'Veranda' },
-    { id: 'garage', path: '/room/garage', icon: FiTool, label: 'Garage' },
+];
+
+const FIXED_BOTTOM_NAV = [
     { id: 'cameras', path: '/cameras', icon: FiVideo, label: 'Cameras' },
     { id: 'music', path: '#', icon: FiMusic, label: 'Music', isMusic: true },
     { id: 'settings', path: '/settings', icon: FiSettings, label: 'Settings' },
 ];
 
 export default function MainLayout() {
-    const { editMode, openMusicPlayer } = useApp();
+    const { editMode, openMusicPlayer, config } = useApp();
     const location = useLocation();
+
+    // Generate room navigation from config
+    const roomNavItems = config.rooms.map((room) => ({
+        id: room.id,
+        path: `/room/${room.id}`,
+        icon: ICON_MAP[room.icon] || FiSquare,
+        label: room.name,
+        color: room.color,
+    }));
+
+    // Combine all nav items
+    const allNavItems = [...FIXED_NAV_ITEMS, ...roomNavItems, ...FIXED_BOTTOM_NAV];
 
     return (
         <div className="h-screen w-screen bg-[#0d1117] flex overflow-hidden">
@@ -44,14 +70,14 @@ export default function MainLayout() {
                 </div>
 
                 {/* Room navigation icons */}
-                <nav className="flex-1 flex flex-col items-center py-2 gap-1 overflow-y-auto">
-                    {ROOM_NAV_ITEMS.map((item) => {
+                <nav className="flex-1 flex flex-col items-center py-2 gap-1 overflow-y-auto custom-scrollbar">
+                    {allNavItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = item.path === '/'
                             ? location.pathname === '/'
                             : location.pathname.startsWith(item.path);
 
-                        if (item.isMusic) {
+                        if ('isMusic' in item && item.isMusic) {
                             return (
                                 <motion.button
                                     key={item.id}
@@ -77,9 +103,10 @@ export default function MainLayout() {
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${isActive
-                                            ? 'bg-cyan-500/20 text-cyan-400'
-                                            : 'text-white/30 hover:text-white hover:bg-white/5'
+                                        ? 'bg-cyan-500/20 text-cyan-400'
+                                        : 'text-white/30 hover:text-white hover:bg-white/5'
                                         }`}
+                                    style={isActive && 'color' in item && item.color ? { color: item.color as string } : undefined}
                                 >
                                     <Icon size={18} />
                                 </motion.div>
@@ -111,7 +138,7 @@ export default function MainLayout() {
             {/* Mobile bottom navigation */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080a0f] border-t border-white/5">
                 <nav className="flex items-center justify-around py-2">
-                    {ROOM_NAV_ITEMS.slice(0, 5).map((item) => {
+                    {allNavItems.slice(0, 5).map((item) => {
                         const Icon = item.icon;
                         const isActive = item.path === '/'
                             ? location.pathname === '/'
