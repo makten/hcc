@@ -22,7 +22,7 @@ import {
     FiChevronDown,
     FiMusic,
     FiSpeaker,
-    FiEye // Ensure all used icons are imported
+    FiEye
 } from 'react-icons/fi';
 import { useApp } from '@/context';
 import { RussoundMiniPlayer } from '@/features/russound-player';
@@ -38,121 +38,54 @@ const ROOM_IMAGES: Record<string, string> = {
     default: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200',
 };
 
-// Room-specific configurations
-const ROOM_CONFIGS: Record<string, {
-    scenes: { id: string; name: string; icon: any; color: string }[];
-    appliances: { key: string; label: string; icon: any }[];
-    lights: { key: string; label: string }[];
-    tempRange: [number, number]; // Standard temp, Target temp
-}> = {
-    'living-room': {
-        scenes: [
-            { id: 'morning', name: 'Morning', icon: FiSunrise, color: 'text-amber-400' },
-            { id: 'movie', name: 'Movie', icon: FiFilm, color: 'text-purple-400' },
-            { id: 'relax', name: 'Relax', icon: FiCoffee, color: 'text-green-400' },
-            { id: 'night', name: 'Night', icon: FiMoon, color: 'text-blue-400' },
-        ],
-        appliances: [
-            { key: 'tv', label: 'TV', icon: FiMonitor },
-            { key: 'stereo', label: 'Stereo', icon: FiSpeaker },
-            { key: 'ps5', label: 'PS5', icon: FiMonitor },
-            { key: 'apple-tv', label: 'Apple TV', icon: FiMonitor },
-        ],
-        lights: [
-            { key: 'main', label: 'Main' },
-            { key: 'spots', label: 'Spots' },
-            { key: 'strip', label: 'LEDs' },
-            { key: 'lamp', label: 'Lamp' },
-        ],
-        tempRange: [21.5, 22.0],
-    },
-    'bedroom-1': {
-        scenes: [
-            { id: 'wakeup', name: 'Wake Up', icon: FiSun, color: 'text-amber-400' },
-            { id: 'read', name: 'Reading', icon: FiCoffee, color: 'text-cyan-400' },
-            { id: 'romance', name: 'Mood', icon: FiMusic, color: 'text-pink-400' },
-            { id: 'sleep', name: 'Sleep', icon: FiMoon, color: 'text-indigo-400' },
-        ],
-        appliances: [
-            { key: 'tv', label: 'TV', icon: FiMonitor },
-            { key: 'fan', label: 'Fan', icon: FiWind },
-            { key: 'purifier', label: 'Air Purifier', icon: FiFilter },
-            { key: 'diffuser', label: 'Diffuser', icon: FiCloudRain },
-        ],
-        lights: [
-            { key: 'ceiling', label: 'Ceiling' },
-            { key: 'bedside-l', label: 'Left' },
-            { key: 'bedside-r', label: 'Right' },
-            { key: 'closet', label: 'Closet' },
-        ],
-        tempRange: [19.5, 20.0],
-    },
-    'kitchen': {
-        scenes: [
-            { id: 'cooking', name: 'Cooking', icon: FiTool, color: 'text-orange-400' },
-            { id: 'dining', name: 'Dining', icon: FiCoffee, color: 'text-yellow-400' },
-            { id: 'clean', name: 'Cleaning', icon: FiDroplet, color: 'text-cyan-400' },
-            { id: 'night', name: 'Night', icon: FiMoon, color: 'text-blue-400' },
-        ],
-        appliances: [
-            { key: 'coffee', label: 'Coffee', icon: FiCoffee },
-            { key: 'kettle', label: 'Kettle', icon: FiDroplet },
-            { key: 'hood', label: 'Hood', icon: FiWind },
-            { key: 'tv', label: 'TV', icon: FiMonitor },
-        ],
-        lights: [
-            { key: 'main', label: 'Main' },
-            { key: 'island', label: 'Island' },
-            { key: 'counter', label: 'Counter' },
-            { key: 'dining', label: 'Table' },
-        ],
-        tempRange: [20.5, 21.0],
-    },
-    'office': {
-        scenes: [
-            { id: 'focus', name: 'Focus', icon: FiBriefcase, color: 'text-cyan-400' },
-            { id: 'meeting', name: 'Meeting', icon: FiVideo, color: 'text-blue-400' },
-            { id: 'break', name: 'Break', icon: FiCoffee, color: 'text-green-400' },
-            { id: 'late', name: 'Late Work', icon: FiMoon, color: 'text-indigo-400' },
-        ],
-        appliances: [
-            { key: 'pc', label: 'PC', icon: FiMonitor },
-            { key: 'monitors', label: 'Monitors', icon: FiMonitor },
-            { key: 'printer', label: 'Printer', icon: FiPrinter },
-            { key: 'fan', label: 'Fan', icon: FiWind },
-        ],
-        lights: [
-            { key: 'main', label: 'Main' },
-            { key: 'desk', label: 'Desk' },
-            { key: 'ambient', label: 'Ambient' },
-            { key: 'shelf', label: 'Shelf' },
-        ],
-        tempRange: [22.0, 22.5],
-    },
-    'default': {
-        scenes: [
-            { id: 'morning', name: 'Morning', icon: FiSunrise, color: 'text-amber-400' },
-            { id: 'active', name: 'Active', icon: FiSun, color: 'text-yellow-400' },
-            { id: 'relax', name: 'Relax', icon: FiCoffee, color: 'text-green-400' },
-            { id: 'night', name: 'Night', icon: FiMoon, color: 'text-blue-400' },
-        ],
-        appliances: [
-            { key: 'dev1', label: 'Device 1', icon: FiPower },
-            { key: 'dev2', label: 'Device 2', icon: FiPower },
-            { key: 'dev3', label: 'Device 3', icon: FiPower },
-            { key: 'dev4', label: 'Device 4', icon: FiPower },
-        ],
-        lights: [
-            { key: 'l1', label: 'Light 1' },
-            { key: 'l2', label: 'Light 2' },
-            { key: 'l3', label: 'Light 3' },
-            { key: 'l4', label: 'Light 4' },
-        ],
-        tempRange: [21.0, 21.5],
-    }
+// Room-specific scene configurations (scenes are still hardcoded as they're more complex)
+const ROOM_SCENES: Record<string, { id: string; name: string; icon: any; color: string }[]> = {
+    'living-room': [
+        { id: 'morning', name: 'Morning', icon: FiSunrise, color: 'text-amber-400' },
+        { id: 'movie', name: 'Movie', icon: FiFilm, color: 'text-purple-400' },
+        { id: 'relax', name: 'Relax', icon: FiCoffee, color: 'text-green-400' },
+        { id: 'night', name: 'Night', icon: FiMoon, color: 'text-blue-400' },
+    ],
+    'bedroom-1': [
+        { id: 'wakeup', name: 'Wake Up', icon: FiSun, color: 'text-amber-400' },
+        { id: 'read', name: 'Reading', icon: FiCoffee, color: 'text-cyan-400' },
+        { id: 'romance', name: 'Mood', icon: FiMusic, color: 'text-pink-400' },
+        { id: 'sleep', name: 'Sleep', icon: FiMoon, color: 'text-indigo-400' },
+    ],
+    'kitchen': [
+        { id: 'cooking', name: 'Cooking', icon: FiTool, color: 'text-orange-400' },
+        { id: 'dining', name: 'Dining', icon: FiCoffee, color: 'text-yellow-400' },
+        { id: 'clean', name: 'Cleaning', icon: FiDroplet, color: 'text-cyan-400' },
+        { id: 'night', name: 'Night', icon: FiMoon, color: 'text-blue-400' },
+    ],
+    'office': [
+        { id: 'focus', name: 'Focus', icon: FiBriefcase, color: 'text-cyan-400' },
+        { id: 'meeting', name: 'Meeting', icon: FiVideo, color: 'text-blue-400' },
+        { id: 'break', name: 'Break', icon: FiCoffee, color: 'text-green-400' },
+        { id: 'late', name: 'Late Work', icon: FiMoon, color: 'text-indigo-400' },
+    ],
+    'default': [
+        { id: 'morning', name: 'Morning', icon: FiSunrise, color: 'text-amber-400' },
+        { id: 'active', name: 'Active', icon: FiSun, color: 'text-yellow-400' },
+        { id: 'relax', name: 'Relax', icon: FiCoffee, color: 'text-green-400' },
+        { id: 'night', name: 'Night', icon: FiMoon, color: 'text-blue-400' },
+    ],
 };
 
-// Helper component for missing icon
+// Device type to icon mapping
+const DEVICE_ICONS: Record<string, any> = {
+    light: FiSun,
+    climate: FiThermometer,
+    fan: FiWind,
+    vacuum: FiTool,
+    media_player: FiMonitor,
+    switch: FiPower,
+    sensor: FiEye,
+    camera: FiVideo,
+    default: FiPower,
+};
+
+// Helper component for filter icon
 function FiFilter(props: any) {
     return <FiWind {...props} className={props.className || ''} style={{ transform: 'rotate(90deg)', ...props.style }} />;
 }
@@ -160,11 +93,20 @@ function FiFilter(props: any) {
 export default function RoomView() {
     const { id } = useParams<{ id: string }>();
     const { config } = useApp();
-    const roomConfig = ROOM_CONFIGS[id || ''] || ROOM_CONFIGS['default'];
+    const room = config.rooms.find((r) => r.id === id);
+
+    // Extract devices from config by type
+    const configuredLights = room?.devices.filter(d => d.type === 'light') || [];
+    const configuredAppliances = room?.devices.filter(d =>
+        d.type === 'media_player' || d.type === 'switch' || d.type === 'fan' || d.type === 'vacuum'
+    ) || [];
+
+    // Get scenes for this room
+    const scenes = ROOM_SCENES[id || ''] || ROOM_SCENES['default'];
 
     // Climate state
-    const [temperature, setTemperature] = useState(roomConfig.tempRange[0]);
-    const [targetTemp, setTargetTemp] = useState(roomConfig.tempRange[1]);
+    const [temperature, setTemperature] = useState(21.5);
+    const [targetTemp, setTargetTemp] = useState(22.0);
     const [acOn, setAcOn] = useState(true);
     const [heatingOn, setHeatingOn] = useState(false);
 
@@ -181,23 +123,17 @@ export default function RoomView() {
 
     // Initialize/Reset state when room changes
     useEffect(() => {
-        // Reset appliances
+        // Initialize configured devices (from Settings)
         const newApps: Record<string, boolean> = {};
-        roomConfig.appliances.forEach(a => newApps[a.key] = Math.random() > 0.7);
+        configuredAppliances.forEach(d => newApps[d.id] = Math.random() > 0.7);
         setApplianceStates(newApps);
 
-        // Reset lights
+        // Initialize configured lights (from Settings)
         const newLights: Record<string, number> = {};
-        roomConfig.lights.forEach(l => newLights[l.key] = Math.floor(Math.random() * 60) + 20);
+        configuredLights.forEach(d => newLights[d.id] = Math.floor(Math.random() * 60) + 20);
         setLightStates(newLights);
 
-        // Reset temps
-        setTemperature(roomConfig.tempRange[0]);
-        setTargetTemp(roomConfig.tempRange[1]);
-
-    }, [id, roomConfig]);
-
-    const room = config.rooms.find((r) => r.id === id);
+    }, [id, configuredLights.length, configuredAppliances.length]);
 
     if (!room) {
         return (
@@ -319,8 +255,8 @@ export default function RoomView() {
                             <button
                                 onClick={() => setAcOn(!acOn)}
                                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${acOn
-                                        ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-900/40'
-                                        : 'bg-[#0a0d14] text-white/20 hover:bg-white/5 hover:text-white/40'
+                                    ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-900/40'
+                                    : 'bg-[#0a0d14] text-white/20 hover:bg-white/5 hover:text-white/40'
                                     }`}
                             >
                                 <FiWind size={16} />
@@ -328,8 +264,8 @@ export default function RoomView() {
                             <button
                                 onClick={() => setHeatingOn(!heatingOn)}
                                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${heatingOn
-                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/40'
-                                        : 'bg-[#0a0d14] text-white/20 hover:bg-white/5 hover:text-white/40'
+                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/40'
+                                    : 'bg-[#0a0d14] text-white/20 hover:bg-white/5 hover:text-white/40'
                                     }`}
                             >
                                 <FiSun size={16} />
@@ -352,8 +288,8 @@ export default function RoomView() {
                     {/* Status Big */}
                     <div className="flex flex-col items-center justify-center flex-1 my-2">
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 transition-all duration-500 ${securityArmed
-                                ? 'bg-[#0a0d14] text-green-400 border-2 border-green-500/20 shadow-[0_0_30px_rgba(74,222,128,0.1)]'
-                                : 'bg-[#0a0d14] text-red-500 border-2 border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]'
+                            ? 'bg-[#0a0d14] text-green-400 border-2 border-green-500/20 shadow-[0_0_30px_rgba(74,222,128,0.1)]'
+                            : 'bg-[#0a0d14] text-red-500 border-2 border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.1)]'
                             }`}>
                             <FiShield size={32} />
                         </div>
@@ -376,15 +312,15 @@ export default function RoomView() {
                     <button
                         onClick={() => setSecurityArmed(!securityArmed)}
                         className={`text-[10px] py-3 w-full rounded-xl font-bold uppercase tracking-wider transition-all active:scale-95 shadow-lg ${securityArmed
-                                ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 shadow-red-900/10'
-                                : 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 shadow-green-900/10'
+                            ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 shadow-red-900/10'
+                            : 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 shadow-green-900/10'
                             }`}
                     >
                         {securityArmed ? 'Disarm System' : 'Arm Away'}
                     </button>
                 </div>
 
-                {/* ========== APPLIANCES CARD (1×2) ========== */}
+                {/* ========== APPLIANCES/DEVICES CARD (1×2) - Uses config devices ========== */}
                 <div className="col-span-1 row-span-2 bg-[#131720] rounded-2xl p-4 flex flex-col border border-white/5 shadow-lg">
                     <div className="flex items-center gap-2 mb-4 flex-shrink-0">
                         <div className="p-1.5 rounded-md bg-purple-500/10 text-purple-400">
@@ -393,30 +329,37 @@ export default function RoomView() {
                         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Devices</span>
                     </div>
 
-                    <div className="flex-1 flex flex-col gap-2.5 min-h-0">
-                        {roomConfig.appliances.map(({ key, label, icon: Icon }) => {
-                            const isOn = getApplianceState(key);
-                            return (
-                                <button
-                                    key={key}
-                                    onClick={() => toggleAppliance(key)}
-                                    className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 group ${isOn
+                    <div className="flex-1 flex flex-col gap-2.5 min-h-0 overflow-y-auto">
+                        {configuredAppliances.length > 0 ? (
+                            configuredAppliances.map((device) => {
+                                const isOn = getApplianceState(device.id);
+                                const Icon = DEVICE_ICONS[device.type] || DEVICE_ICONS.default;
+                                return (
+                                    <button
+                                        key={device.id}
+                                        onClick={() => toggleAppliance(device.id)}
+                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 group ${isOn
                                             ? 'bg-purple-500/10 border-purple-500/30'
                                             : 'bg-[#0a0d14] border-transparent hover:bg-white/5 hover:border-white/5'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Icon size={14} className={isOn ? 'text-purple-400' : 'text-white/30'} />
-                                        <span className={`text-[10px] font-bold ${isOn ? 'text-white' : 'text-white/50'}`}>{label}</span>
-                                    </div>
-                                    <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isOn ? 'bg-purple-400 shadow-[0_0_8px_#a855f7]' : 'bg-[#191e2b]'}`} />
-                                </button>
-                            );
-                        })}
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon size={14} className={isOn ? 'text-purple-400' : 'text-white/30'} />
+                                            <span className={`text-[10px] font-bold ${isOn ? 'text-white' : 'text-white/50'}`}>{device.name}</span>
+                                        </div>
+                                        <div className={`w-2 h-2 rounded-full transition-all duration-300 ${isOn ? 'bg-purple-400 shadow-[0_0_8px_#a855f7]' : 'bg-[#191e2b]'}`} />
+                                    </button>
+                                );
+                            })
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-white/30 text-xs">
+                                No devices configured
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* ========== LIGHTS CARD (1×2) ========== */}
+                {/* ========== LIGHTS CARD (1×2) - Uses config lights ========== */}
                 <div className="col-span-1 row-span-2 bg-[#131720] rounded-2xl p-4 flex flex-col border border-white/5 shadow-lg">
                     <div className="flex items-center gap-2 mb-4 flex-shrink-0">
                         <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-400">
@@ -425,29 +368,35 @@ export default function RoomView() {
                         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">Lighting</span>
                     </div>
 
-                    <div className="flex-1 flex flex-col gap-4 min-h-0">
-                        {roomConfig.lights.map(({ key, label }) => {
-                            const level = getLightLevel(key);
-                            return (
-                                <div key={key} className="space-y-1.5">
-                                    <div className="flex justify-between items-center text-[10px]">
-                                        <span className="text-white/60 font-bold">{label}</span>
-                                        <span className="text-amber-400 font-mono">{level}%</span>
+                    <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
+                        {configuredLights.length > 0 ? (
+                            configuredLights.map((device) => {
+                                const level = getLightLevel(device.id);
+                                return (
+                                    <div key={device.id} className="space-y-1.5">
+                                        <div className="flex justify-between items-center text-[10px]">
+                                            <span className="text-white/60 font-bold">{device.name}</span>
+                                            <span className="text-amber-400 font-mono">{level}%</span>
+                                        </div>
+                                        <div className="h-1.5 bg-[#0a0d14] rounded-full overflow-hidden relative group">
+                                            <div
+                                                className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                                                style={{ width: `${level}%` }}
+                                            />
+                                            <input
+                                                type="range" min="0" max="100" value={level}
+                                                onChange={(e) => setLightLevel(device.id, parseInt(e.target.value))}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="h-1.5 bg-[#0a0d14] rounded-full overflow-hidden relative group">
-                                        <div
-                                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
-                                            style={{ width: `${level}%` }}
-                                        />
-                                        <input
-                                            type="range" min="0" max="100" value={level}
-                                            onChange={(e) => setLightLevel(key, parseInt(e.target.value))}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        />
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-white/30 text-xs">
+                                No lights configured
+                            </div>
+                        )}
 
                         <div className="mt-auto pt-2 border-t border-white/5 flex gap-2">
                             <button className="flex-1 py-2 bg-[#0a0d14] rounded-lg text-[9px] font-bold text-white/30 hover:text-white hover:bg-white/5 transition-all">
@@ -470,7 +419,7 @@ export default function RoomView() {
                     </div>
 
                     <div className="flex-1 grid grid-cols-2 gap-3 min-h-0">
-                        {roomConfig.scenes.map((scene) => {
+                        {scenes.map((scene) => {
                             const Icon = scene.icon;
                             const isActive = activeScene === scene.id;
 
@@ -479,8 +428,8 @@ export default function RoomView() {
                                     key={scene.id}
                                     onClick={() => setActiveScene(isActive ? null : scene.id)}
                                     className={`flex flex-col items-center justify-center gap-2 rounded-2xl border transition-all duration-300 group relative overflow-hidden ${isActive
-                                            ? `bg-white/5 border-white/20 shadow-lg scale-95`
-                                            : 'bg-[#0a0d14] border-transparent hover:bg-white/5 hover:border-white/5'
+                                        ? `bg-white/5 border-white/20 shadow-lg scale-95`
+                                        : 'bg-[#0a0d14] border-transparent hover:bg-white/5 hover:border-white/5'
                                         }`}
                                 >
                                     <div className={`absolute inset-0 opacity-20 bg-gradient-to-br transition-opacity ${isActive ? 'opacity-100' : 'opacity-0'} ${scene.color.replace('text', 'from').replace('400', '500/20').replace('500', '600/20')} to-transparent`} />
