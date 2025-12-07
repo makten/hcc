@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AppProvider } from '@/context';
 import { MainLayout } from '@/components/layout';
-import { HomePage, RoomView, RoomsPage, SettingsPage } from '@/pages';
+import { HomePage, RoomView, RoomsPage, SettingsPage, CamerasPage } from '@/pages';
 
 /**
  * Home Control Center - Premium Smart Home Dashboard
@@ -36,6 +36,7 @@ function App() {
                         <Route index element={<HomePage />} />
                         <Route path="room/:id" element={<RoomView />} />
                         <Route path="rooms" element={<RoomsPage />} />
+                        <Route path="cameras" element={<CamerasPage />} />
                         <Route path="settings" element={<SettingsPage />} />
                     </Route>
                 </Routes>
