@@ -34,7 +34,7 @@ export default function ClimateCard({ entityId, name, deviceId, roomId }: Climat
     const maxTemp = 30;
     const tempRange = maxTemp - minTemp;
     const tempProgress = (targetTemp - minTemp) / tempRange;
-    const dialRotation = tempProgress * 270 - 135; // -135° to 135°
+    // dialRotation calculation removed - was unused
 
     // Handle dial interaction
     const handleDialMove = (clientX: number, clientY: number) => {
@@ -137,8 +137,8 @@ export default function ClimateCard({ entityId, name, deviceId, roomId }: Climat
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setHvacMode(mode.mode)}
                         className={`py-2 px-1 rounded-lg flex flex-col items-center gap-1 transition-all duration-200 ${hvacMode === mode.mode
-                                ? 'border'
-                                : 'bg-white/5 text-white/40 hover:bg-white/10'
+                            ? 'border'
+                            : 'bg-white/5 text-white/40 hover:bg-white/10'
                             }`}
                         style={{
                             background: hvacMode === mode.mode ? `${mode.color}20` : undefined,

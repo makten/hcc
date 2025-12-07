@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiSettings, FiRefreshCw, FiWifi, FiMoon, FiSun, FiGrid, FiList, FiTrash2, FiCheck } from 'react-icons/fi';
 import { useApp } from '@/context';
@@ -63,8 +63,8 @@ export default function SettingsPage() {
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleConnect}
                                 className={`px-6 py-3 rounded-xl font-medium transition-colors ${connected
-                                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                        : 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30 hover:bg-accent-primary/30'
+                                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                    : 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30 hover:bg-accent-primary/30'
                                     }`}
                             >
                                 {connected ? (

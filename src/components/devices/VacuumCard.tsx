@@ -1,6 +1,5 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { FiPlay, FiPause, FiHome, FiBattery } from 'react-icons/fi';
+import { FiPlay, FiHome, FiBattery } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
 import { useMockEntity } from '@/hooks';
 import { VacuumAttributes } from '@/types';
@@ -124,8 +123,8 @@ export default function VacuumCard({ entityId, name, deviceId, roomId }: VacuumC
                     onClick={vacuumStart}
                     disabled={isCleaning}
                     className={`py-3 rounded-xl flex items-center justify-center gap-2 font-medium transition-all duration-200 ${isCleaning
-                            ? 'bg-white/5 text-white/30 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-green-500/30 to-emerald-500/30 text-green-300 border border-green-500/30 hover:from-green-500/40 hover:to-emerald-500/40'
+                        ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-green-500/30 to-emerald-500/30 text-green-300 border border-green-500/30 hover:from-green-500/40 hover:to-emerald-500/40'
                         }`}
                 >
                     <FiPlay size={16} />
@@ -137,8 +136,8 @@ export default function VacuumCard({ entityId, name, deviceId, roomId }: VacuumC
                     onClick={vacuumDock}
                     disabled={status === 'docked'}
                     className={`py-3 rounded-xl flex items-center justify-center gap-2 font-medium transition-all duration-200 ${status === 'docked'
-                            ? 'bg-white/5 text-white/30 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-300 border border-blue-500/30 hover:from-blue-500/40 hover:to-cyan-500/40'
+                        ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500/30 to-cyan-500/30 text-blue-300 border border-blue-500/30 hover:from-blue-500/40 hover:to-cyan-500/40'
                         }`}
                 >
                     <FiHome size={16} />

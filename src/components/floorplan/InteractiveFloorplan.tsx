@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context';
@@ -276,7 +276,7 @@ export default function InteractiveFloorplan() {
                 {FLOORPLAN_ROOMS.map((room) => {
                     const state = roomStates[room.id];
                     const isLit = state?.lightsOn;
-                    const isPlaying = state?.mediaPlaying;
+                    // Note: state?.mediaPlaying is available but handled via roomStates
                     const isHovered = hoveredRoom === room.id;
 
                     return (

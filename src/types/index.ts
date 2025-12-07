@@ -55,6 +55,7 @@ export interface EntityState {
 
 // Media player specific attributes
 export interface MediaPlayerAttributes {
+    [key: string]: unknown;
     volume_level?: number;
     is_volume_muted?: boolean;
     media_content_type?: string;
@@ -70,6 +71,7 @@ export interface MediaPlayerAttributes {
 
 // Climate specific attributes
 export interface ClimateAttributes {
+    [key: string]: unknown;
     current_temperature?: number;
     temperature?: number;
     target_temp_high?: number;
@@ -83,6 +85,7 @@ export interface ClimateAttributes {
 
 // Light specific attributes
 export interface LightAttributes {
+    [key: string]: unknown;
     brightness?: number;
     color_temp?: number;
     rgb_color?: [number, number, number];
@@ -92,6 +95,7 @@ export interface LightAttributes {
 
 // Vacuum specific attributes
 export interface VacuumAttributes {
+    [key: string]: unknown;
     battery_level?: number;
     status?: string;
     fan_speed?: string;
@@ -100,6 +104,7 @@ export interface VacuumAttributes {
 
 // Fan specific attributes
 export interface FanAttributes {
+    [key: string]: unknown;
     percentage?: number;
     preset_mode?: string;
     preset_modes?: string[];

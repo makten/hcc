@@ -1,4 +1,4 @@
-import React from 'react';
+// React is auto-imported by the JSX transform
 import { motion } from 'framer-motion';
 import { FiWind } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
@@ -104,8 +104,8 @@ export default function FanCard({ entityId, name, deviceId, roomId }: FanCardPro
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setFanSpeed(speed.value)}
                         className={`py-2 rounded-xl text-xs font-medium transition-all duration-200 ${currentSpeed.value === speed.value
-                                ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 text-cyan-300 border border-cyan-500/30'
-                                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                            ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 text-cyan-300 border border-cyan-500/30'
+                            : 'bg-white/5 text-white/50 hover:bg-white/10'
                             }`}
                     >
                         {speed.label}
