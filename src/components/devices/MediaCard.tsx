@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FiVolume2, FiPlay, FiPause, FiMusic } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
-import { useMockEntity } from '@/hooks';
+import { useEntity } from '@/hooks';
 import { MediaPlayerAttributes } from '@/types';
 
 interface MediaCardProps {
@@ -13,7 +13,7 @@ interface MediaCardProps {
 }
 
 export default function MediaCard({ entityId, name, deviceId, roomId }: MediaCardProps) {
-    const { state, setVolume, mediaPlay, mediaPause } = useMockEntity(entityId);
+    const { state, setVolume, mediaPlay, mediaPause } = useEntity(entityId);
     const attributes = state.attributes as MediaPlayerAttributes;
     const volumeLevel = attributes.volume_level ?? 0.5;
     const mediaTitle = attributes.media_title;
@@ -70,8 +70,8 @@ export default function MediaCard({ entityId, name, deviceId, roomId }: MediaCar
                 whileTap={{ scale: 0.95 }}
                 onClick={isPlaying ? mediaPause : mediaPlay}
                 className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 mb-4 font-medium transition-all duration-300 ${isPlaying
-                        ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 border border-purple-500/30'
-                        : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 border border-purple-500/30'
+                    : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
                     }`}
             >
                 {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}

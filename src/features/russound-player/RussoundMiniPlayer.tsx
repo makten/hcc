@@ -241,24 +241,24 @@ export default function RussoundMiniPlayer({ roomName, className = '' }: Russoun
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={() => navigateSource('up')}
-                                    className="p-1.5 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all"
+                                    className="p-3 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all"
                                 >
-                                    <FiChevronUp size={14} />
+                                    <FiChevronUp size={18} />
                                 </motion.button>
 
                                 {/* Compact Vertical Wheel */}
                                 <div
                                     ref={wheelRef}
                                     onWheel={handleWheel}
-                                    className="relative h-16 w-28 overflow-hidden cursor-ns-resize select-none"
+                                    className="relative h-24 w-40 overflow-hidden cursor-ns-resize select-none"
                                     style={{ perspective: '300px' }}
                                 >
                                     {/* Selection Highlight */}
-                                    <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-6 rounded-lg bg-white/5 border border-white/10 z-0" />
+                                    <div className="absolute inset-x-1 top-1/2 -translate-y-1/2 h-8 rounded-lg bg-white/5 border border-white/10 z-0" />
 
                                     {/* Fade gradients */}
-                                    <div className="absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-[#16213e] to-transparent z-10 pointer-events-none" />
-                                    <div className="absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-[#16213e] to-transparent z-10 pointer-events-none" />
+                                    <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-[#16213e] to-transparent z-10 pointer-events-none" />
+                                    <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-[#16213e] to-transparent z-10 pointer-events-none" />
 
                                     {/* Wheel Items */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -268,7 +268,7 @@ export default function RussoundMiniPlayer({ roomName, className = '' }: Russoun
                                                 const isCenter = pos === 0;
 
                                                 const rotateX = pos * -20;
-                                                const translateY = pos * 16;
+                                                const translateY = pos * 20; // Increased spacing
                                                 const scale = isCenter ? 1 : 0.7;
                                                 const opacity = isCenter ? 1 : 0.3;
 
@@ -292,19 +292,19 @@ export default function RussoundMiniPlayer({ roomName, className = '' }: Russoun
                                                             if (pos === -1) navigateSource('up');
                                                             if (pos === 1) navigateSource('down');
                                                         }}
-                                                        className={`absolute flex items-center gap-2 px-2 py-1 rounded-lg cursor-pointer ${isCenter ? 'text-white' : 'text-white/40'
+                                                        className={`absolute flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer ${isCenter ? 'text-white' : 'text-white/40'
                                                             }`}
                                                         style={{
                                                             transformStyle: 'preserve-3d',
                                                         }}
                                                     >
                                                         <span
-                                                            className={`text-sm ${isCenter ? 'drop-shadow-[0_0_4px_currentColor]' : ''}`}
+                                                            className={`text-base ${isCenter ? 'drop-shadow-[0_0_4px_currentColor]' : ''}`}
                                                             style={{ color: isCenter ? source.color : 'inherit' }}
                                                         >
                                                             {source.icon}
                                                         </span>
-                                                        <span className={`font-bold uppercase tracking-wider ${isCenter ? 'text-[10px]' : 'text-[8px]'}`}>
+                                                        <span className={`font-bold uppercase tracking-wider ${isCenter ? 'text-xs' : 'text-[10px]'}`}>
                                                             {source.name}
                                                         </span>
                                                     </motion.div>
@@ -319,9 +319,9 @@ export default function RussoundMiniPlayer({ roomName, className = '' }: Russoun
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={() => navigateSource('down')}
-                                    className="p-1.5 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all"
+                                    className="p-3 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-all"
                                 >
-                                    <FiChevronDown size={14} />
+                                    <FiChevronDown size={18} />
                                 </motion.button>
                             </div>
                         </motion.div>

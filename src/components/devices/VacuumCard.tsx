@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { FiPlay, FiHome, FiBattery } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
-import { useMockEntity } from '@/hooks';
+import { useEntity } from '@/hooks';
 import { VacuumAttributes } from '@/types';
 
 interface VacuumCardProps {
@@ -12,7 +12,7 @@ interface VacuumCardProps {
 }
 
 export default function VacuumCard({ entityId, name, deviceId, roomId }: VacuumCardProps) {
-    const { state, vacuumStart, vacuumDock } = useMockEntity(entityId);
+    const { state, vacuumStart, vacuumDock } = useEntity(entityId);
     const attributes = state.attributes as VacuumAttributes;
     const batteryLevel = attributes.battery_level ?? 100;
     const status = state.state;

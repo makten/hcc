@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FiThermometer, FiDroplet, FiWind, FiSun } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
-import { useMockEntity } from '@/hooks';
+import { useEntity } from '@/hooks';
 import { ClimateAttributes } from '@/types';
 
 interface ClimateCardProps {
@@ -20,7 +20,7 @@ const HVAC_MODES = [
 ];
 
 export default function ClimateCard({ entityId, name, deviceId, roomId }: ClimateCardProps) {
-    const { state, setTemperature, setHvacMode } = useMockEntity(entityId);
+    const { state, setTemperature, setHvacMode } = useEntity(entityId);
     const attributes = state.attributes as ClimateAttributes;
     const currentTemp = attributes.current_temperature ?? 20;
     const targetTemp = attributes.temperature ?? 21;

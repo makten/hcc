@@ -36,7 +36,7 @@ export interface HassServiceResponse {
 class HomeAssistantApi {
     private baseUrl: string = '';
     private accessToken: string = '';
-    private useProxy: boolean = false;
+    private useProxy: boolean = true;  // Default to true - use proxy before configure() is called
 
     /**
      * Configure the API with Home Assistant URL and access token
@@ -45,7 +45,14 @@ class HomeAssistantApi {
         // Remove trailing slash if present
         this.baseUrl = config.url.replace(/\/$/, '');
         this.accessToken = config.accessToken;
-        this.useProxy = config.useProxy ?? false;
+        this.useProxy = config.useProxy ?? true;
+    }
+
+    /**
+     * Check if the API is properly configured with credentials
+     */
+    isConfigured(): boolean {
+        return Boolean(this.accessToken && this.accessToken.length > 0);
     }
 
     /**
@@ -56,7 +63,7 @@ class HomeAssistantApi {
             // Use local proxy endpoint
             return `/api/hass${endpoint}`;
         }
-        return `${this.baseUrl}${endpoint}`;
+        return `${this.baseUrl}/api${endpoint}`;
     }
 
     /**
@@ -132,20 +139,68 @@ class HomeAssistantApi {
     }
 
     /**
+     * Safely parse JSON response, with better error handling for HTML responses
+     */
+    private async parseJsonResponse<T>(response: Response, context: string): Promise<T> {
+        const contentType = response.headers.get('content-type');
+
+        // Check if response is JSON
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+
+            // Check if it's an HTML response (common when proxy fails)
+            if (text.trim().startsWith('<') || text.trim().startsWith('<!DOCTYPE')) {
+                console.error(`[${context}] Received HTML instead of JSON. This usually means:`);
+                console.error('  1. The Home Assistant URL is incorrect');
+                console.error('  2. Home Assistant is not reachable');
+                console.error('  3. The Vite proxy is not properly configured');
+                console.error('Response preview:', text.substring(0, 200));
+                throw new Error(`Received HTML instead of JSON - check Home Assistant URL and connectivity`);
+            }
+
+            // Try to parse as JSON anyway (some servers don't set content-type correctly)
+            try {
+                return JSON.parse(text) as T;
+            } catch {
+                throw new Error(`Invalid response format: ${text.substring(0, 100)}`);
+            }
+        }
+
+        return response.json() as Promise<T>;
+    }
+
+    /**
      * Get all entity states
      */
     async getStates(): Promise<HassState[]> {
+        // Don't make API calls if not configured
+        if (!this.isConfigured()) {
+            return [];
+        }
+
         try {
-            const response = await fetch(this.getEffectiveUrl('/states'), {
+            const url = this.getEffectiveUrl('/states');
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: this.getHeaders(),
             });
 
             if (!response.ok) {
+                // 401 is expected when token is invalid/missing - not an error to log loudly
+                if (response.status === 401) {
+                    console.debug('[getStates] Authentication failed (401) - check access token');
+                    return [];
+                }
+                // Check if the response is HTML (indicates proxy/server issue)
+                const contentType = response.headers.get('content-type');
+                if (contentType?.includes('text/html')) {
+                    console.error('[getStates] Received HTML error page. Proxy may not be reaching Home Assistant.');
+                    throw new Error(`Proxy error: Cannot reach Home Assistant at ${this.baseUrl}`);
+                }
                 throw new Error(`Failed to get states: ${response.status}`);
             }
 
-            return await response.json();
+            return await this.parseJsonResponse<HassState[]>(response, 'getStates');
         } catch (error) {
             console.error('Error getting states:', error);
             return [];
@@ -156,6 +211,10 @@ class HomeAssistantApi {
      * Get state of a specific entity
      */
     async getState(entityId: string): Promise<HassState | null> {
+        if (!this.isConfigured()) {
+            return null;
+        }
+
         try {
             const response = await fetch(this.getEffectiveUrl(`/states/${entityId}`), {
                 method: 'GET',
@@ -166,7 +225,7 @@ class HomeAssistantApi {
                 return null;
             }
 
-            return await response.json();
+            return await this.parseJsonResponse<HassState>(response, 'getState');
         } catch (error) {
             console.error(`Error getting state for ${entityId}:`, error);
             return null;
@@ -259,7 +318,7 @@ class HomeAssistantApi {
                 return null;
             }
 
-            return await response.json();
+            return await this.parseJsonResponse<HassConfig>(response, 'getConfig');
         } catch (error) {
             console.error('Error getting config:', error);
             return null;

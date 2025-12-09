@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { FiWind } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
-import { useMockEntity } from '@/hooks';
+import { useEntity } from '@/hooks';
 import { FanAttributes } from '@/types';
 
 interface FanCardProps {
@@ -20,7 +20,7 @@ const FAN_SPEEDS = [
 ];
 
 export default function FanCard({ entityId, name, deviceId, roomId }: FanCardProps) {
-    const { state, isOn, setFanSpeed } = useMockEntity(entityId);
+    const { state, isOn, setFanSpeed } = useEntity(entityId);
     const attributes = state.attributes as FanAttributes;
     const percentage = attributes.percentage ?? 0;
 

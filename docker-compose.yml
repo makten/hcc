@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   home-control-center:
     build:
@@ -8,22 +6,45 @@ services:
     container_name: home-control-center
     restart: unless-stopped
     ports:
-      # Expose on all network interfaces (0.0.0.0) so it's accessible
-      # from any device on the local network
-      - "8080:80"
+      - "3001:3000"
+    volumes:
+      # Persistent data storage
+      - hcc_data:/app/data
     environment:
+      # Server configuration
       - NODE_ENV=production
-    # Health check to ensure the app is running
+      - PORT=3000
+      
+      # Database location
+      - DATA_DIR=/app/data
+      - DATABASE_PATH=/app/data/hcc.db
+      
+      # Home Assistant connection (optional - can be configured in UI)
+      # - HASS_URL=http://homeassistant:8123
+      # - HASS_TOKEN=your_long_lived_access_token
+    networks:
+      - hcc_network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    # Resource limits (optional, adjust as needed)
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
+    labels:
+      # Traefik labels (if you use Traefik as reverse proxy)
+      - "traefik.enable=true"
+      - "traefik.http.routers.hcc.rule=Host(`hcc.local`)"
+      - "traefik.http.services.hcc.loadbalancer.server.port=3000"
+
+networks:
+  hcc_network:
+    driver: bridge
+
+volumes:
+  hcc_data:
+    driver: local
+    # Optional: specify exact location on host
+    # driver_opts:
+    #   type: none
+    #   o: bind
+    #   device: /path/to/hcc/data

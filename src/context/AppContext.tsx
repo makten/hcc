@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { DashboardConfig, DeviceConfig, RoomConfig, HomeAssistantConfig } from '@/types';
 import { defaultConfig, STORAGE_KEYS } from '@/config';
+import { hassApi } from '@/services';
 
 interface AppContextType {
     config: DashboardConfig;
@@ -51,6 +52,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         return defaultConfig;
     });
+
+    // Configure Home Assistant API whenever config changes
+    useEffect(() => {
+        if (config.homeAssistant) {
+            hassApi.configure({
+                url: config.homeAssistant.url,
+                accessToken: config.homeAssistant.accessToken,
+                useProxy: true, // Always use proxy - Vite in dev, nginx in production
+            });
+        }
+    }, [config.homeAssistant]);
 
     const [editMode, setEditMode] = useState(false);
     const [audioMatrixOpen, setAudioMatrixOpen] = useState(false);

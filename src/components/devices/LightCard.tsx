@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FiSun, FiZap } from 'react-icons/fi';
 import DeviceCard from './DeviceCard';
-import { useMockEntity } from '@/hooks';
+import { useEntity } from '@/hooks';
 import { LightAttributes } from '@/types';
 
 interface LightCardProps {
@@ -13,7 +13,7 @@ interface LightCardProps {
 }
 
 export default function LightCard({ entityId, name, deviceId, roomId }: LightCardProps) {
-    const { state, isOn, toggle, setBrightness } = useMockEntity(entityId);
+    const { state, isOn, toggle, setBrightness } = useEntity(entityId);
     const attributes = state.attributes as LightAttributes;
     const brightness = attributes.brightness ?? 0;
     const brightnessPercent = Math.round((brightness / 255) * 100);
@@ -37,8 +37,8 @@ export default function LightCard({ entityId, name, deviceId, roomId }: LightCar
                 whileTap={{ scale: 0.95 }}
                 onClick={toggle}
                 className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 mb-4 font-medium transition-all duration-300 ${isOn
-                        ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 text-yellow-300 border border-yellow-500/30'
-                        : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 text-yellow-300 border border-yellow-500/30'
+                    : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10'
                     }`}
             >
                 <FiZap size={16} />

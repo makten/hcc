@@ -22,6 +22,8 @@ import {
     FiEdit2
 } from 'react-icons/fi';
 import { useApp } from '@/context';
+import { RestrictedAccess, PinConfirmModal } from '@/components/auth';
+import { usePinProtectedAction } from '@/hooks';
 import { DeviceConfig, RoomConfig, DeviceType } from '@/types';
 
 const DEVICE_TYPES: { value: DeviceType; label: string; icon: string }[] = [
@@ -116,6 +118,7 @@ function AddDeviceModal({
             hassApi.configure({
                 url: hassUrl,
                 accessToken: accessToken,
+                useProxy: true, // Always use proxy to avoid CORS
             });
             hassApi.getStates().then((states) => {
                 console.log(`Fetched ${states.length} entities from Home Assistant`);
@@ -833,6 +836,26 @@ export default function SettingsPage() {
     const [editRoomModalRoom, setEditRoomModalRoom] = useState<RoomConfig | null>(null);
     const [showAddRoomModal, setShowAddRoomModal] = useState(false);
 
+    // PIN protection for reset config action
+    const {
+        executeWithPin,
+        modalProps: pinModalProps,
+    } = usePinProtectedAction();
+
+    const handleResetWithPin = () => {
+        executeWithPin(() => {
+            resetConfig();
+            setShowResetConfirm(false);
+            setHassUrl('http://homeassistant.local:8123');
+            setAccessToken('');
+            setConnectionStatus('idle');
+        }, {
+            actionType: 'destructive',
+            title: 'Reset Configuration',
+            description: 'This action will erase all your settings. Do you want to continue?',
+        });
+    };
+
     const handleConnect = async () => {
         setIsConnecting(true);
         setConnectionStatus('idle');
@@ -877,14 +900,6 @@ export default function SettingsPage() {
         });
     };
 
-    const handleReset = () => {
-        resetConfig();
-        setShowResetConfirm(false);
-        setHassUrl('http://homeassistant.local:8123');
-        setAccessToken('');
-        setConnectionStatus('idle');
-    };
-
     const handleAddRoom = (formData: RoomFormData) => {
         const id = formData.name.toLowerCase().replace(/\s+/g, '-');
         const newRoom: RoomConfig = {
@@ -916,307 +931,312 @@ export default function SettingsPage() {
     const connected = config.homeAssistant?.connected || false;
 
     return (
-        <div className="h-full overflow-auto custom-scrollbar p-4 md:p-6">
-            <div className="space-y-6 max-w-3xl mx-auto">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-4"
-                >
-                    <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-                        <FiSettings size={24} className="text-cyan-400" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Settings</h1>
-                        <p className="text-white/50">Configure your smart home dashboard</p>
-                    </div>
-                </motion.div>
-
-                {/* Home Assistant Connection */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="rounded-2xl bg-[#131720] border border-white/10 p-6"
-                >
-                    <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                        <FiWifi size={20} className="text-cyan-400" />
-                        Home Assistant Connection
-                    </h2>
-
-                    <div className="space-y-4">
+        <RestrictedAccess permission="canAccessSettings" fallbackMessage="Only administrators can access system settings.">
+            <div className="h-full overflow-auto custom-scrollbar p-4 md:p-6">
+                <div className="space-y-6 max-w-3xl mx-auto">
+                    {/* Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-4"
+                    >
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                            <FiSettings size={24} className="text-cyan-400" />
+                        </div>
                         <div>
-                            <label className="block text-sm text-white/50 mb-2">Server URL</label>
-                            <input
-                                type="text"
-                                value={hassUrl}
-                                onChange={(e) => setHassUrl(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none"
-                                placeholder="http://homeassistant.local:8123"
-                            />
+                            <h1 className="text-2xl font-bold text-white">Settings</h1>
+                            <p className="text-white/50">Configure your smart home dashboard</p>
                         </div>
+                    </motion.div>
 
-                        <div>
-                            <label className="block text-sm text-white/50 mb-2 flex items-center gap-2">
-                                <FiKey size={14} />
-                                Long-Lived Access Token
-                            </label>
-                            <input
-                                type="password"
-                                value={accessToken}
-                                onChange={(e) => setAccessToken(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none font-mono text-sm"
-                                placeholder="Enter your Home Assistant access token"
-                            />
-                            <p className="text-xs text-white/30 mt-2">
-                                Generate at: Profile → Long-Lived Access Tokens → Create Token
-                            </p>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={handleSaveConnection}
-                                className="px-6 py-3 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors flex items-center gap-2"
-                            >
-                                <FiSave size={16} />
-                                Save
-                            </motion.button>
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={handleConnect}
-                                disabled={isConnecting}
-                                className={`flex-1 px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${connectionStatus === 'success'
-                                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                    : connectionStatus === 'error'
-                                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                                        : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30'
-                                    }`}
-                            >
-                                {isConnecting ? (
-                                    <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                    >
-                                        <FiRefreshCw size={16} />
-                                    </motion.div>
-                                ) : connectionStatus === 'success' ? (
-                                    <>
-                                        <FiCheck size={16} />
-                                        Connected
-                                    </>
-                                ) : (
-                                    'Test Connection'
-                                )}
-                            </motion.button>
-                        </div>
-
-                        <div className={`flex items-start gap-3 p-3 rounded-xl ${connected ? 'bg-green-500/10' : connectionError ? 'bg-red-500/10' : 'bg-white/5'}`}>
-                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${connected ? 'bg-green-400' : connectionError ? 'bg-red-400' : 'bg-gray-400'}`} />
-                            <div className="flex-1 min-w-0">
-                                {connected ? (
-                                    <>
-                                        <span className="text-sm text-green-400">
-                                            Connected to Home Assistant{haVersion ? ` v${haVersion}` : ''}
-                                        </span>
-                                        {config.homeAssistant?.lastConnected && (
-                                            <span className="text-xs text-white/40 block mt-0.5">
-                                                Last connected: {new Date(config.homeAssistant.lastConnected).toLocaleString()}
-                                            </span>
-                                        )}
-                                    </>
-                                ) : connectionError ? (
-                                    <pre className="text-sm text-red-300 whitespace-pre-wrap font-sans">{connectionError}</pre>
-                                ) : (
-                                    <span className="text-sm text-white/60">
-                                        Not connected - click "Test Connection" to connect
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* Rooms & Devices Management */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="rounded-2xl bg-[#131720] border border-white/10 p-6"
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-medium text-white flex items-center gap-2">
-                            <FiCpu size={20} className="text-purple-400" />
-                            Rooms & Devices
+                    {/* Home Assistant Connection */}
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="rounded-2xl bg-[#131720] border border-white/10 p-6"
+                    >
+                        <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                            <FiWifi size={20} className="text-cyan-400" />
+                            Home Assistant Connection
                         </h2>
-                        <button
-                            onClick={() => setShowAddRoomModal(true)}
-                            className="px-4 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-colors flex items-center gap-2 text-sm"
-                        >
-                            <FiPlus size={14} />
-                            Add Room
-                        </button>
-                    </div>
 
-                    <div className="space-y-2">
-                        {config.rooms.map((room) => (
-                            <RoomSection
-                                key={room.id}
-                                room={room}
-                                onAddDevice={() => setAddDeviceModalRoom(room)}
-                                onRemoveDevice={(deviceId) => removeDeviceFromRoom(room.id, deviceId)}
-                                onRemoveRoom={() => removeRoom(room.id)}
-                                onEditRoom={() => setEditRoomModalRoom(room)}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="mt-4 p-4 rounded-xl bg-white/5 border border-dashed border-white/20">
-                        <p className="text-sm text-white/40 text-center">
-                            Total: {config.rooms.length} rooms, {config.rooms.reduce((acc, room) => acc + room.devices.length, 0)} devices
-                        </p>
-                    </div>
-                </motion.section>
-
-                {/* Appearance settings */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="rounded-2xl bg-[#131720] border border-white/10 p-6"
-                >
-                    <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                        <FiMoon size={20} className="text-indigo-400" />
-                        Appearance
-                    </h2>
-
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm text-white/50 mb-3">Theme</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button className="p-4 rounded-xl bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-cyan-500/50 flex items-center gap-3">
-                                    <FiMoon size={20} className="text-cyan-400" />
-                                    <span className="text-white font-medium">Dark</span>
-                                </button>
-                                <button className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 opacity-50 cursor-not-allowed">
-                                    <FiSun size={20} className="text-white/40" />
-                                    <span className="text-white/40 font-medium">Light</span>
-                                    <span className="text-xs text-white/30">(Coming)</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm text-white/50 mb-3">Grid Layout</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button className="p-4 rounded-xl bg-white/5 border-2 border-cyan-500/50 flex items-center gap-3">
-                                    <FiGrid size={20} className="text-cyan-400" />
-                                    <span className="text-white font-medium">Comfortable</span>
-                                </button>
-                                <button className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 hover:border-white/20 transition-colors">
-                                    <FiList size={20} className="text-white/50" />
-                                    <span className="text-white/70 font-medium">Compact</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* Reset section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="rounded-2xl bg-[#131720] border border-red-500/20 p-6"
-                >
-                    <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                        <FiRefreshCw size={20} className="text-red-400" />
-                        Reset
-                    </h2>
-
-                    {!showResetConfirm ? (
-                        <div className="flex items-center justify-between">
+                        <div className="space-y-4">
                             <div>
-                                <p className="text-white/70">Reset to defaults</p>
-                                <p className="text-sm text-white/40">
-                                    This will reset all room and device configurations
+                                <label className="block text-sm text-white/50 mb-2">Server URL</label>
+                                <input
+                                    type="text"
+                                    value={hassUrl}
+                                    onChange={(e) => setHassUrl(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none"
+                                    placeholder="http://homeassistant.local:8123"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-white/50 mb-2 flex items-center gap-2">
+                                    <FiKey size={14} />
+                                    Long-Lived Access Token
+                                </label>
+                                <input
+                                    type="password"
+                                    value={accessToken}
+                                    onChange={(e) => setAccessToken(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:border-cyan-500/50 focus:outline-none font-mono text-sm"
+                                    placeholder="Enter your Home Assistant access token"
+                                />
+                                <p className="text-xs text-white/30 mt-2">
+                                    Generate at: Profile → Long-Lived Access Tokens → Create Token
                                 </p>
                             </div>
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowResetConfirm(true)}
-                                className="px-4 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors flex items-center gap-2"
-                            >
-                                <FiTrash2 size={16} />
-                                Reset
-                            </motion.button>
-                        </div>
-                    ) : (
-                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-                            <p className="text-white mb-4">
-                                Are you sure? This cannot be undone.
-                            </p>
+
                             <div className="flex gap-3">
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
-                                    onClick={handleReset}
-                                    className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                    onClick={handleSaveConnection}
+                                    className="px-6 py-3 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 transition-colors flex items-center gap-2"
                                 >
-                                    Yes, Reset Everything
+                                    <FiSave size={16} />
+                                    Save
                                 </motion.button>
                                 <motion.button
                                     whileTap={{ scale: 0.95 }}
-                                    onClick={() => setShowResetConfirm(false)}
-                                    className="px-4 py-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                                    onClick={handleConnect}
+                                    disabled={isConnecting}
+                                    className={`flex-1 px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${connectionStatus === 'success'
+                                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                        : connectionStatus === 'error'
+                                            ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                                            : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30'
+                                        }`}
                                 >
-                                    Cancel
+                                    {isConnecting ? (
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                        >
+                                            <FiRefreshCw size={16} />
+                                        </motion.div>
+                                    ) : connectionStatus === 'success' ? (
+                                        <>
+                                            <FiCheck size={16} />
+                                            Connected
+                                        </>
+                                    ) : (
+                                        'Test Connection'
+                                    )}
                                 </motion.button>
                             </div>
+
+                            <div className={`flex items-start gap-3 p-3 rounded-xl ${connected ? 'bg-green-500/10' : connectionError ? 'bg-red-500/10' : 'bg-white/5'}`}>
+                                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${connected ? 'bg-green-400' : connectionError ? 'bg-red-400' : 'bg-gray-400'}`} />
+                                <div className="flex-1 min-w-0">
+                                    {connected ? (
+                                        <>
+                                            <span className="text-sm text-green-400">
+                                                Connected to Home Assistant{haVersion ? ` v${haVersion}` : ''}
+                                            </span>
+                                            {config.homeAssistant?.lastConnected && (
+                                                <span className="text-xs text-white/40 block mt-0.5">
+                                                    Last connected: {new Date(config.homeAssistant.lastConnected).toLocaleString()}
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : connectionError ? (
+                                        <pre className="text-sm text-red-300 whitespace-pre-wrap font-sans">{connectionError}</pre>
+                                    ) : (
+                                        <span className="text-sm text-white/60">
+                                            Not connected - click "Test Connection" to connect
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
+                    </motion.section>
+
+                    {/* Rooms & Devices Management */}
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="rounded-2xl bg-[#131720] border border-white/10 p-6"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-medium text-white flex items-center gap-2">
+                                <FiCpu size={20} className="text-purple-400" />
+                                Rooms & Devices
+                            </h2>
+                            <button
+                                onClick={() => setShowAddRoomModal(true)}
+                                className="px-4 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-colors flex items-center gap-2 text-sm"
+                            >
+                                <FiPlus size={14} />
+                                Add Room
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            {config.rooms.map((room) => (
+                                <RoomSection
+                                    key={room.id}
+                                    room={room}
+                                    onAddDevice={() => setAddDeviceModalRoom(room)}
+                                    onRemoveDevice={(deviceId) => removeDeviceFromRoom(room.id, deviceId)}
+                                    onRemoveRoom={() => removeRoom(room.id)}
+                                    onEditRoom={() => setEditRoomModalRoom(room)}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="mt-4 p-4 rounded-xl bg-white/5 border border-dashed border-white/20">
+                            <p className="text-sm text-white/40 text-center">
+                                Total: {config.rooms.length} rooms, {config.rooms.reduce((acc, room) => acc + room.devices.length, 0)} devices
+                            </p>
+                        </div>
+                    </motion.section>
+
+                    {/* Appearance settings */}
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="rounded-2xl bg-[#131720] border border-white/10 p-6"
+                    >
+                        <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                            <FiMoon size={20} className="text-indigo-400" />
+                            Appearance
+                        </h2>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm text-white/50 mb-3">Theme</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button className="p-4 rounded-xl bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-cyan-500/50 flex items-center gap-3">
+                                        <FiMoon size={20} className="text-cyan-400" />
+                                        <span className="text-white font-medium">Dark</span>
+                                    </button>
+                                    <button className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 opacity-50 cursor-not-allowed">
+                                        <FiSun size={20} className="text-white/40" />
+                                        <span className="text-white/40 font-medium">Light</span>
+                                        <span className="text-xs text-white/30">(Coming)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-white/50 mb-3">Grid Layout</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button className="p-4 rounded-xl bg-white/5 border-2 border-cyan-500/50 flex items-center gap-3">
+                                        <FiGrid size={20} className="text-cyan-400" />
+                                        <span className="text-white font-medium">Comfortable</span>
+                                    </button>
+                                    <button className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3 hover:border-white/20 transition-colors">
+                                        <FiList size={20} className="text-white/50" />
+                                        <span className="text-white/70 font-medium">Compact</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.section>
+
+                    {/* Reset section */}
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="rounded-2xl bg-[#131720] border border-red-500/20 p-6"
+                    >
+                        <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                            <FiRefreshCw size={20} className="text-red-400" />
+                            Reset
+                        </h2>
+
+                        {!showResetConfirm ? (
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-white/70">Reset to defaults</p>
+                                    <p className="text-sm text-white/40">
+                                        This will reset all room and device configurations
+                                    </p>
+                                </div>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setShowResetConfirm(true)}
+                                    className="px-4 py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors flex items-center gap-2"
+                                >
+                                    <FiTrash2 size={16} />
+                                    Reset
+                                </motion.button>
+                            </div>
+                        ) : (
+                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+                                <p className="text-white mb-4">
+                                    Are you sure? This cannot be undone.
+                                </p>
+                                <div className="flex gap-3">
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={handleResetWithPin}
+                                        className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                    >
+                                        Yes, Reset Everything
+                                    </motion.button>
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setShowResetConfirm(false)}
+                                        className="px-4 py-2 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                                    >
+                                        Cancel
+                                    </motion.button>
+                                </div>
+                            </div>
+                        )}
+                    </motion.section>
+
+                    {/* Version info */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-center text-sm text-white/30 pb-6"
+                    >
+                        Home Control Center v1.0.0
+                    </motion.div>
+                </div>
+
+                {/* Modals */}
+                <AnimatePresence>
+                    {addDeviceModalRoom && (
+                        <AddDeviceModal
+                            isOpen={!!addDeviceModalRoom}
+                            onClose={() => setAddDeviceModalRoom(null)}
+                            onSave={(formData) => handleAddDevice(addDeviceModalRoom.id, formData)}
+                            roomName={addDeviceModalRoom.name}
+                            hassConnected={connected}
+                            hassUrl={hassUrl}
+                            accessToken={accessToken}
+                        />
                     )}
-                </motion.section>
+                    {editRoomModalRoom && (
+                        <EditRoomModal
+                            isOpen={!!editRoomModalRoom}
+                            onClose={() => setEditRoomModalRoom(null)}
+                            onSave={(updates) => handleUpdateRoom(editRoomModalRoom.id, updates)}
+                            room={editRoomModalRoom}
+                        />
+                    )}
+                    {showAddRoomModal && (
+                        <AddRoomModal
+                            isOpen={showAddRoomModal}
+                            onClose={() => setShowAddRoomModal(false)}
+                            onSave={handleAddRoom}
+                        />
+                    )}
 
-                {/* Version info */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-center text-sm text-white/30 pb-6"
-                >
-                    Home Control Center v1.0.0
-                </motion.div>
+                    {/* PIN Confirmation Modal */}
+                    <PinConfirmModal {...pinModalProps} />
+                </AnimatePresence>
             </div>
-
-            {/* Modals */}
-            <AnimatePresence>
-                {addDeviceModalRoom && (
-                    <AddDeviceModal
-                        isOpen={!!addDeviceModalRoom}
-                        onClose={() => setAddDeviceModalRoom(null)}
-                        onSave={(formData) => handleAddDevice(addDeviceModalRoom.id, formData)}
-                        roomName={addDeviceModalRoom.name}
-                        hassConnected={connected}
-                        hassUrl={hassUrl}
-                        accessToken={accessToken}
-                    />
-                )}
-                {editRoomModalRoom && (
-                    <EditRoomModal
-                        isOpen={!!editRoomModalRoom}
-                        onClose={() => setEditRoomModalRoom(null)}
-                        onSave={(updates) => handleUpdateRoom(editRoomModalRoom.id, updates)}
-                        room={editRoomModalRoom}
-                    />
-                )}
-                {showAddRoomModal && (
-                    <AddRoomModal
-                        isOpen={showAddRoomModal}
-                        onClose={() => setShowAddRoomModal(false)}
-                        onSave={handleAddRoom}
-                    />
-                )}
-            </AnimatePresence>
-        </div>
+        </RestrictedAccess>
     );
 }

@@ -17,6 +17,8 @@ export interface DeviceConfig {
     name: string;
     type: DeviceType;
     icon?: string;
+    x?: number; // X position on floorplan (0-100)
+    y?: number; // Y position on floorplan (0-100)
 }
 
 // Audio source configuration
@@ -118,3 +120,10 @@ export interface FanAttributes {
     preset_mode?: string;
     preset_modes?: string[];
 }
+
+// Export all type modules
+export * from './user';
+export * from './notifications';
+export * from './energy';
+export * from './scenes';
+export * from './theming';
